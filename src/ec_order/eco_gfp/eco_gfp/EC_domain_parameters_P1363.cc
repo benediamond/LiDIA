@@ -268,7 +268,6 @@ void EC_domain_parameters_P1363::generate_parameters(int field,
 	// The field
 	//
 	galois_field theField(p);
-	bigmod::set_modulus(p);
 
 	// Twist coordinates
 	//

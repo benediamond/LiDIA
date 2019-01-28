@@ -41,12 +41,9 @@ wep_rat_function::ff_pol_m wep_rat_function::modulus;
 
 wep_rat_function::wep_rat_function()
 {
-	x.set_modulus(wep_rat_function::a.modulus());
-	x.assign_one();
-	y.set_modulus(wep_rat_function::a.modulus());
-	y.assign_one();
-	z.set_modulus(wep_rat_function::a.modulus());
-	z.assign_zero();
+	x.assign_one(wep_rat_function::a.get_field());
+	y.assign_one(wep_rat_function::a.get_field());
+	z.assign_zero(wep_rat_function::a.get_field());
 }
 
 
@@ -76,10 +73,10 @@ bool operator == (const wep_rat_function & P, const wep_rat_function & Q)
 {
 	wep_rat_function::ff_pol h, h2, h1, h3;
 
-	h.set_modulus(wep_rat_function::a.modulus());
-	h1.set_modulus(wep_rat_function::a.modulus());
-	h3.set_modulus(wep_rat_function::a.modulus());
-	h2.set_modulus(wep_rat_function::a.modulus());
+	h.assign_zero(wep_rat_function::a.get_field());
+	h1.assign_zero(wep_rat_function::a.get_field());
+	h3.assign_zero(wep_rat_function::a.get_field());
+	h2.assign_zero(wep_rat_function::a.get_field());
 
 	square(h1, Q.z, wep_rat_function::modulus);
 	multiply(h, P.x, h1, wep_rat_function::modulus);
@@ -111,10 +108,10 @@ bool wep_rat_function::on_curve() const
 	if (z.is_zero())
 		return true;
 
-	h.set_modulus(a.modulus());
-	h1.set_modulus(a.modulus());
-	h2.set_modulus(a.modulus());
-	h3.set_modulus(a.modulus());
+	h.assign_zero(wep_rat_function::a.get_field());
+	h1.assign_zero(wep_rat_function::a.get_field());
+	h2.assign_zero(wep_rat_function::a.get_field());
+	h3.assign_zero(wep_rat_function::a.get_field());
 
 	square(h, y, wep_rat_function::modulus);
 	mult_by_curve(h, wep_rat_function::modulus.modulus());
@@ -123,8 +120,7 @@ bool wep_rat_function::on_curve() const
 	multiply(h1, x, h1, wep_rat_function::modulus);
 	square(h2, z, wep_rat_function::modulus);
 	square(h3, h2, wep_rat_function::modulus);
-	add(h2, wep_rat_function::a.mantissa() * x,
-	    wep_rat_function::b.mantissa() * h2);
+	add(h2, wep_rat_function::a * x, wep_rat_function::b * h2);
 	multiply(h2, h2, h3, wep_rat_function::modulus);
 	add(h1, h1, h2);
 	subtract(h, h, h1);
@@ -158,14 +154,14 @@ void add_PQ (wep_rat_function & R, const wep_rat_function & P,
 	wep_rat_function::ff_pol t1, t2, t3, t4, t5;
 	wep_rat_function::ff_pol x3, y3, z3;
 
-	t1.set_modulus(wep_rat_function::a.modulus());
-	t2.set_modulus(wep_rat_function::a.modulus());
-	t3.set_modulus(wep_rat_function::a.modulus());
-	t4.set_modulus(wep_rat_function::a.modulus());
-	t5.set_modulus(wep_rat_function::a.modulus());
-	x3.set_modulus(wep_rat_function::a.modulus());
-	y3.set_modulus(wep_rat_function::a.modulus());
-	z3.set_modulus(wep_rat_function::a.modulus());
+	t1.assign_zero(wep_rat_function::a.get_field());
+	t2.assign_zero(wep_rat_function::a.get_field());
+	t3.assign_zero(wep_rat_function::a.get_field());
+	t4.assign_zero(wep_rat_function::a.get_field());
+	t5.assign_zero(wep_rat_function::a.get_field());
+	x3.assign_zero(wep_rat_function::a.get_field());
+	y3.assign_zero(wep_rat_function::a.get_field());
+	z3.assign_zero(wep_rat_function::a.get_field());
 
 	square(t2, Q.z, wep_rat_function::modulus);
 	multiply(t1, P.x, t2, wep_rat_function::modulus);
@@ -199,12 +195,15 @@ void add_PQ (wep_rat_function & R, const wep_rat_function & P,
 	mult_by_curve(x3, wep_rat_function::modulus.modulus());
 	subtract(x3, x3, t4);
 
-	subtract(t4, t4, 2 * x3);
+	subtract(t4, t4, bigint(2) * x3);
 	multiply(y3, y3, t5, wep_rat_function::modulus);
 	multiply(y3, y3, t2, wep_rat_function::modulus);
 	multiply(t1, t4, t3, wep_rat_function::modulus);
 	subtract(y3, t1, y3);
-	multiply_by_scalar(y3, y3, (inverse(bigmod(2))).mantissa());
+	wep_rat_function::ff_element inv2(wep_rat_function::a.get_field());
+	inv2.assign(2);
+	invert(inv2, inv2);
+	multiply(y3, inv2, y3);
 
 	R.assign(x3, y3, z3);
 }
@@ -216,14 +215,14 @@ void add_P_XY (wep_rat_function & R, const wep_rat_function & P)
   wep_rat_function::ff_pol t1, t2, t3, t4, t5;
   wep_rat_function::ff_pol x3, y3, z3;
 
-  t1.set_modulus(wep_rat_function::a.modulus());
-  t2.set_modulus(wep_rat_function::a.modulus());
-  t3.set_modulus(wep_rat_function::a.modulus());
-  t4.set_modulus(wep_rat_function::a.modulus());  
-  t5.set_modulus(wep_rat_function::a.modulus());  
-  x3.set_modulus(wep_rat_function::a.modulus()); 
-  y3.set_modulus(wep_rat_function::a.modulus());  
-  z3.set_modulus(wep_rat_function::a.modulus());
+  t1.assign_zero(wep_rat_function::a.get_field());
+  t2.assign_zero(wep_rat_function::a.get_field());
+  t3.assign_zero(wep_rat_function::a.get_field());
+  t4.assign_zero(wep_rat_function::a.get_field());
+  t5.assign_zero(wep_rat_function::a.get_field());
+  x3.assign_zero(wep_rat_function::a.get_field());
+  y3.assign_zero(wep_rat_function::a.get_field());
+  z3.assign_zero(wep_rat_function::a.get_field());
 
   square(t4, P.z, wep_rat_function::modulus);
   multiply_by_x_mod(t3, t4, wep_rat_function::modulus.modulus());
@@ -251,12 +250,15 @@ void add_P_XY (wep_rat_function & R, const wep_rat_function & P)
   mult_by_curve(x3, wep_rat_function::modulus.modulus());
   subtract(x3, x3, t4);
 
-  subtract(t4, t4, 2 * x3);
+  subtract(t4, t4, bigint(2) * x3);
   multiply(y3, y3, t5, wep_rat_function::modulus);
   multiply(y3, y3, t2, wep_rat_function::modulus);
   multiply(t1, t4, t3, wep_rat_function::modulus);
   subtract(y3, t1, y3);
-  multiply_by_scalar(y3, y3, (inverse(bigmod(2))).mantissa());
+  wep_rat_function::ff_element inv2(wep_rat_function::a.get_field());
+  inv2.assign(2);
+  invert(inv2, inv2);
+  multiply(y3, inv2, y3);
   
   R.assign(x3, y3, z3);
 }
@@ -303,33 +305,33 @@ void multiply_by_2 (wep_rat_function & Q, const wep_rat_function & P)
 
 	wep_rat_function::ff_pol m, x3, y3, z3, s, t;
 
-	x3.set_modulus(wep_rat_function::a.modulus());
-	y3.set_modulus(wep_rat_function::a.modulus());
-	z3.set_modulus(wep_rat_function::a.modulus());
-	m.set_modulus(wep_rat_function::a.modulus());
-	s.set_modulus(wep_rat_function::a.modulus());
-	t.set_modulus(wep_rat_function::a.modulus());
+	x3.assign_zero(wep_rat_function::a.get_field());
+	y3.assign_zero(wep_rat_function::a.get_field());
+	z3.assign_zero(wep_rat_function::a.get_field());
+	m.assign_zero(wep_rat_function::a.get_field());
+	s.assign_zero(wep_rat_function::a.get_field());
+	t.assign_zero(wep_rat_function::a.get_field());
 
 	square(m, P.z, wep_rat_function::modulus);
 	square(m, m, wep_rat_function::modulus);
-	multiply_by_scalar(m, m, wep_rat_function::a.mantissa());
+	multiply(m, wep_rat_function::a, m);
 	square(s, P.x, wep_rat_function::modulus);
-	multiply_by_scalar(s, s, 3);
+	multiply(s, bigint(3), s);
 	add(m, m, s);
 
 	multiply(z3, P.y, P.z, wep_rat_function::modulus);
-	multiply_by_scalar(z3, z3, 2);
+	multiply(z3, bigint(2), z3);
 
 	square(t, P.y, wep_rat_function::modulus);
 	mult_by_curve(t, wep_rat_function::modulus.modulus());
 	multiply(s, t, P.x, wep_rat_function::modulus);
-	multiply_by_scalar(s, s, 4);
+	multiply(s, bigint(4), s);
 
 	square(x3, m, wep_rat_function::modulus);
-	subtract(x3, x3, 2 * s);
+	subtract(x3, x3, bigint(2) * s);
 
 	square(t, t, wep_rat_function::modulus);
-	multiply_by_scalar(t, t, 8);
+	multiply(t, bigint(8), t);
 
 	subtract(y3, s, x3);
 	multiply(y3, m, y3, wep_rat_function::modulus);

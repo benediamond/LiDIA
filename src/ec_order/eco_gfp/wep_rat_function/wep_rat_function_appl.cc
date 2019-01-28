@@ -30,7 +30,7 @@ using namespace LiDIA;
 int main_LiDIA(int argc, char** argv)
 {
 	bigint p;
-	int i;
+	int k, i;
 	bool quiet = false;
 
 	if (argc == 2 && strcmp(argv[1], "--quiet") == 0)
@@ -41,14 +41,18 @@ int main_LiDIA(int argc, char** argv)
 			 << "\n==================================\n"
 			 << "\nCharacteristic : ";
 		std::cin >> p;
+		std::cout << "Degree of field extension : ";
+		std::cin >> k;
+	} else {
+		power(p, 10, 8);
+		k = 1;
 	}
-	else power(p, 10, 8);
 
 	p = next_prime(p-1);
 	if (!quiet)
 		std::cout << "\nChoose next prime, p = " << p << " (" << decimal_length(p) << ")" << std::flush;
-	bigmod::set_modulus(p);
-	bigmod a4, a6;
+	galois_field K(p, k);
+	gf_element a4(K), a6(K);
 	int deg_modulus;
 
 	if (!quiet) {
@@ -62,11 +66,15 @@ int main_LiDIA(int argc, char** argv)
 		deg_modulus = 50;
 	}
 
-	Fp_polynomial m;
-	build_irred(m, p, deg_modulus);
+	polynomial< gf_element > m;
+	do { // build_irred(m, p, deg_modulus);
+		m = randomize(K, deg_modulus);
+		divide(m, m, m.lead_coeff());
+	} while (!det_irred_test(m));
 	std::cout << "\nThe modulus chosen is " << m << "." << std::endl;
-	Fp_poly_modulus pm(m);
+	gf_poly_modulus pm(m);
 
+	gf_element::set_uninitialized_field(K); // do this inside initialize?
 	wep_rat_function::initialize(a4, a6, pm);
 	wep_rat_function P, mP, m2P, m3P;
 
@@ -135,6 +143,8 @@ int main_LiDIA(int argc, char** argv)
 	}
 	if (!quiet)
 		std::cout << "  DONE.\n\n" << std::flush;
+
+	return 0;
 }
 
 

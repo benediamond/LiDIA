@@ -79,7 +79,7 @@ namespace LiDIA {
 template <>
 class polynomial< gf_element >;
 class gf_poly_modulus;
-class gf_poly_multiplier;
+class gf_poly_multiplier; // here yet the class is commented out?
 
 bool checked_min_poly(polynomial< gf_element > & h,
 		      const polynomial< gf_element > & g, lidia_size_t r,
@@ -250,6 +250,10 @@ public:
 	void assign_zero(const galois_field &K);
 	void assign_one(const galois_field &K);
 	void assign_x(const galois_field &K);
+	void get_coefficient(gf_element &a, lidia_size_t i) const;
+	void set_coefficient(const gf_element &a, lidia_size_t i);
+	void set_coefficient(const bigint &a, lidia_size_t i);
+	void set_coefficient(lidia_size_t i);
 
 	friend void swap(polynomial< gf_element > &a, polynomial< gf_element > &b);
 
@@ -257,6 +261,8 @@ public:
 	//
 	// arithmetic procedures
 	//
+
+	void negate();
 
 	friend void negate(polynomial< gf_element > & c,
 			   const polynomial< gf_element > &a);
@@ -510,7 +516,8 @@ public:
 			    const gf_poly_modulus &P);
 	friend void power_x_plus_a(polynomial< gf_element > &c,
 				   const gf_element &a, const bigint &e, const gf_poly_modulus &P);
-
+	friend void multiply(polynomial< gf_element > &x, const polynomial< gf_element > &a,
+				   gf_poly_multiplier &B, gf_poly_modulus &F);
 
 
 	//
@@ -659,11 +666,20 @@ void gcd(polynomial< gf_element > &d,
 	 const polynomial< gf_element > &aa,
 	 const polynomial< gf_element > &bb);
 
+inline polynomial<gf_element> gcd(const polynomial<gf_element> &a,
+	 const polynomial<gf_element> &b) {
+	 polynomial<gf_element> x;
+
+	 gcd(x, a, b);
+	 return x;
+}
+
 void xgcd(polynomial< gf_element > &d, polynomial< gf_element > &x,
 	  polynomial< gf_element > &y, const polynomial< gf_element > &aa,
 	  const polynomial< gf_element > &bb);
 
 
+void resultant(gf_element &r, const polynomial<gf_element> &ff, const polynomial<gf_element> &gg);
 	//
 	//  modular arithmetic without pre-conditioning
 	//
@@ -767,7 +783,6 @@ void power_x_plus_a(polynomial< gf_element > &c,
 		    const gf_poly_modulus &P);
 
 
-
 	//
 	//  stuff for factoring algorithms
 	//
@@ -783,7 +798,11 @@ void trace_map(polynomial< gf_element > & w,
 	       const polynomial< gf_element > & a, lidia_size_t d,
 	       const gf_poly_modulus &f, const polynomial< gf_element > & b);
 
+void inner_product(gf_element &x, const base_vector<gf_element> &a,
+	       const polynomial<gf_element> &b, lidia_size_t offset = 0);
 
+void compose(polynomial<gf_element> &x, const polynomial<gf_element> &g,
+	       const polynomial<gf_element> &h, const gf_poly_modulus &F);
 
 typedef polynomial< gf_element > gf_polynomial;
 
@@ -795,9 +814,11 @@ bool operator <= (const polynomial< gf_element > &a,
 
 
 
-base_vector< gf_element > find_roots(const gf_polynomial &f);
+void find_roots(base_vector< gf_element > &x, const gf_polynomial &f);
+base_vector< gf_element > find_roots(const gf_polynomial &f, int flag = 0);
 gf_element find_root( const gf_polynomial & f );
-
+lidia_size_t compute_degree(const gf_polynomial &h, const gf_poly_modulus &F,
+	lidia_size_t d);
 
 class gf_poly_modulus
 {

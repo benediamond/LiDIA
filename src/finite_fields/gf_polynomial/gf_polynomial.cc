@@ -294,7 +294,75 @@ void polynomial< gf_element >::assign_x(const galois_field &K)
 	pol[1].assign_one(K);
 }
 
+void polynomial<gf_element>::get_coefficient(gf_element &a,
+                                             lidia_size_t i) const
+{
+	debug_handler_l("polynomial<gf_element>",
+		"get_coefficient (gf_element&, lidia_size_t)", 3);
+	if (i < 0 || i > degree())
+		a.assign_zero();
+	else
+		a.assign(pol[i]);
+}
 
+void polynomial<gf_element>::set_coefficient(const gf_element &a,
+                                             lidia_size_t i)
+{
+	if (is_undefined(ffield))
+		lidia_error_handler(
+			"polynomial< gf_element >",
+			"set_coefficient(gf_element&, lidia_size_t)::undefined field");
+
+	if (i < 0) {
+		lidia_error_handler_c(
+			"polynomial< gf_element >",
+			"set_coefficient(gf_element&, lidia_size_t)::negative index",
+        std::cout << "index = " << i << std::endl;);
+		return;
+	}
+
+	lidia_size_t j, m = degree();
+
+	if (i > m) {
+		if (!a.is_zero()) {
+			set_degree(i);
+			for (j = m + 1; j < i; j++)
+				pol[j].assign_zero(ffield); // arg useful or necessary?!
+			pol[i].assign(a);
+		}
+	} else {
+		pol[i].assign(a);
+		if (i == m)
+			remove_leading_zeros();
+	}
+}
+
+void polynomial<gf_element>::set_coefficient(const bigint &a, lidia_size_t i) {
+	gf_element temp(a);
+	set_coefficient(temp, i);
+}
+
+void polynomial<gf_element>::set_coefficient(lidia_size_t i) {
+	if (is_undefined(ffield))
+		lidia_error_handler("polynomial< gf_element >",
+			"set_coefficient(lidia_size_t)::undefined field");
+
+	if (i < 0) {
+		lidia_error_handler_c("polynomial< gf_element >",
+			"set_coefficient(lidia_size_t)::negative index ",
+			std::cout << "index = " << i << std::endl;);
+		return;
+	}
+
+	lidia_size_t j, m = degree();
+
+	if (i > m) {
+		set_degree(i);
+		for (j = m + 1; j < i; j++)
+			pol[j].assign_zero();
+	}
+	pol[i].assign_one();
+}
 
 //for class single_factor< gf_polynomial >
 bool operator< (const polynomial < gf_element > &a,
@@ -310,6 +378,10 @@ bool operator< (const polynomial < gf_element > &a,
 	return false;
 }
 
+void polynomial<gf_element>::negate()
+{
+	LiDIA::negate(*this, *this);
+}
 
 
 bool operator <= (const polynomial< gf_element > &a,
@@ -695,7 +767,41 @@ polynomial< gf_element >::operator %= (const polynomial< gf_element > &a)
 	return *this;
 }
 
+void resultant(gf_element &r, const polynomial<gf_element> &ff,
+               const polynomial<gf_element> &gg)
+{
+	polynomial<gf_element> f(ff), g(gg);
+	gf_element l; // will assign field later
+	int m, d;
 
+	r.assign_one(ff.get_field());
+	m = g.degree();
+
+	do {
+		remainder(g, g, f);
+		d = g.degree();
+
+		if (d < m) {
+			l.assign(f.lead_coeff());
+			power(l, l, m - d); // power_mod(l, l, m - d, p);
+			multiply(r, r, l);  // MulMod(r, r, l, p);
+		}
+
+		if (g.degree() <= 0)
+			break;
+
+		swap(f, g);
+
+		m = g.degree();
+		if ((f.degree() & 1) == 1 && (m & 1) == 1)
+			negate(r, r); // subtract(r, p, r);
+	} while (true);
+
+	if (g.is_zero())
+		r.assign_zero(ff.get_field());
+	else
+		multiply(r, r, g.const_term());
+}
 
 #if 0
 polynomial< gf_element > gcd(const polynomial< gf_element > &aa,

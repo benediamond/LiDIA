@@ -37,14 +37,14 @@
 #ifndef LIDIA_DENSE_POWER_SERIES_H_GUARD_
 # include "LiDIA/dense_power_series.h"
 #endif
-#ifndef LIDIA_FP_RATIONAL_FUNCTION_H_GUARD_
-# include "LiDIA/Fp_rational_function.h"
+#ifndef LIDIA_GF_RATIONAL_FUNCTION_H_GUARD_
+#include "LiDIA/gf_rational_function.h"
 #endif
 #ifndef LIDIA_WEP_RAT_FUNCTION_H_GUARD_
-# include "LiDIA/wep_rat_function.h"
-#endif
-#ifndef LIDIA_FP_POLY_MULTIPLIER_H_GUARD_
-# include "LiDIA/Fp_poly_multiplier.h"
+#include "LiDIA/wep_rat_function.h"
+#endif // necessary?
+#ifndef LIDIA_GF_POLYNOMIAL_H_GUARD_
+#include "LiDIA/gf_polynomial.h"
 #endif
 #ifndef LIDIA_BASE_VECTOR_H_GUARD_
 # include "LiDIA/base_vector.h"
@@ -74,13 +74,13 @@ private :
 
 	// ***** types used in the class eco_prime *****
 
-	typedef bigmod  	       ff_element;
-	typedef Fp_polynomial        ff_pol;
-	typedef Fp_rational_function ff_rat;
-	typedef Fp_poly_modulus      ff_polmod;
-	typedef Fp_poly_multiplier   ff_polmult;
-	typedef ff1     	       ff1_element;
-	typedef ff2  	               ff2_element;
+	typedef gf_element               ff_element;
+	typedef polynomial< gf_element > ff_pol;
+	typedef gf_rational_function     ff_rat;
+	typedef gf_poly_modulus          ff_polmod;
+	typedef gf_poly_multiplier       ff_polmult;
+	typedef ff1                      ff1_element;
+	typedef ff2                      ff2_element;
 
         // the forward and friend declarations are required since 
         // PsiPowers needs access to the private type spcifier ff_pol.
@@ -124,6 +124,21 @@ public:
 	static const char TEST_X_COORDINATE; // test with X or Y-coordinate
 	static const char TEST_Y_COORDINATE; // in Elkies part
 
+protected:
+	ff_element A, B; // elliptic curve over finite field
+	ff_element jinv; // j - invariant of E=(A, B)
+
+	elliptic_curve< gf_element > E_; // the curve, _ to mark member variables
+
+	ff_pol        meq_pol; // l - th modular polynomial
+	ff_polmod     meq_pol_mod; // PolyModulus of it
+	ff_element    ftau[2]; // roots of meq_pol
+
+	udigit              l;
+
+	void compute_divisor_of_division_polynomial(ff_pol & div_of_div_pol,
+						    ff_element  & E2a,
+						    ff_element  & E2b);
 
 private:
 	
@@ -131,17 +146,10 @@ private:
 
 	bigint p; 		// characteristic of finite field
 	bigint pn; 	 	  	// number of elements of finite field
-	ff_element A, B; // elliptic curve over finite field
-	ff_element jinv; // j - invariant of E=(A, B)
-
-	elliptic_curve< gf_element > E_; // the curve, _ to mark member variables
 
 
 	// ***** class variables, non statics *****
 
-	ff_pol        meq_pol; // l - th modular polynomial
-	ff_polmod     meq_pol_mod; // PolyModulus of it
-	ff_element    ftau[2]; // roots of meq_pol
 	char          sp_type; // splitting type of meq_pol
 	char          degree_mode;
 	udigit        sp_degree; // contains the splitting degree of meq_pol
@@ -155,7 +163,6 @@ private:
 
 	udigit              q; // pn mod l, l might be a prime power
 	sort_vector< udigit > c; // contains c mod l, c is trace of Frobenius
-	udigit              l;
 
 	int info;
 
@@ -201,9 +208,6 @@ private:
 
 	//******* File elkies/div_of_divpol.cc ******************************
 	
-	void compute_divisor_of_division_polynomial(ff_pol & div_of_div_pol,
-						    ff_element  & E2a,
-						    ff_element  & E2b);
 	void guess_jltau (base_vector< ff_element > &);
 
 	void coefficient_comparison(ff_pol &, const ff_element &,
@@ -273,8 +277,8 @@ public:
 
 
 	void Ytop_f (ff_pol &res, const ff_polmod &f);
-	void CurveEqn (ff_pol & pol, const bigint & p, const ff_element & a,
-		       const ff_element & b, const ff_polmod & f);
+	void CurveEqn (ff_pol & pol, const ff_element & a, const ff_element & b,
+		       const ff_polmod & f);
 
 	int extract_sqrt(point< gf_element > * &, const point< gf_element > &);
 	int max_two_power(const point< gf_element > &);
@@ -298,7 +302,7 @@ public:
 
 	//********* File elkies/BG_algorithms.cc *************************
 
-	void mult_matrix(base_vector< bigint > &, const ff_pol &,
+	void mult_matrix(base_vector< gf_element > &, const ff_pol &,
 			 const ff_polmod &);
 
 	int search_in_table(const ff_rat & f, ff_rat * table, const ff_polmod & F,

@@ -85,6 +85,18 @@ Let $f$ be of type \code{polynomial< gf_element >}:
   sets the field over which $f$ is defined.  $f$ is set to the polynomial $1 \cdot x^1$.
 \end{fcode}
 
+\begin{fcode}{void}{$f$.set_coefficient}{const gf_element & $a$, lidia_size_t $i$}
+  sets coefficient of $x^i$ to $a$; if $i > \deg(f)$, all coefficients $c_j$ of $x^j$
+  with $j = \deg(f)+1, \dots, i-1$ are set to zero; the degree of $f$ is adapted automatically.
+  The \LEH is invoked if $i < 0$.
+\end{fcode}
+
+\begin{fcode}{void}{$f$.set_coefficient}{lidia_size_t $i$}
+  This is equivalent to \code{$f$.set_coefficient(1,i)}.  Sets coefficient of $x^i$ to $1$; if
+  $i > \deg(f)$, all coefficients $c_j$ of $x^j$ with $j = \deg(f)+1, \dots, i-1$ are set to
+  zero; the degree of $f$ is adapted automatically.  The \LEH is invoked if $i < 0$.
+\end{fcode}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -142,6 +154,10 @@ of type \code{polynomial< gf_element >}.
 \begin{fcode}{polynomial< gf_element >}{xgcd}{polynomial< gf_element > & $s$,
     polynomial< gf_element > & $t$, const polynomial< gf_element > & $f$, const polynomial< gf_element > & $g$}%
   computes $s$ and $t$ such that $\gcd(f, g) = s \cdot f + t \cdot g$ and returns $\gcd(s, t)$
+\end{fcode}
+
+\begin{fcode}{void}{resultant}{gf_element & r, const polynomial< gf_element > & $f$, const polynomial< gf_element > & $g$}
+  sets $r$ to the resultant of two polynomials $f$ and $g$.
 \end{fcode}
 
 
@@ -203,9 +219,16 @@ Let $f$ be an instance of type \code{polynomial< gf_element >}.
   $f \assign g \bmod x^m-1$.
 \end{fcode}
 
-\begin{fcode}{base_vector< gf_element >}{find_roots}{const polynomial< gf_element > & $f$}
-  returns the list of roots of $f$.  Assumes that $f$ is monic and has $\deg(f)$ distinct roots;
-  otherwise the behaviour of this function is undefined.
+\begin{fcode}{base_vector< gf_element >}{find_roots}{const polynomial< gf_element > & $f$,
+    int $\mathit{flag}$ = 0}%
+  returns the list of roots of $f$ (without multiplicities).  If $\mathit{flag} \neq 0$, $f$
+  must be monic and the product of $\deg(f)$ distinct roots; otherwise no assumptions on $f$ are
+  made.
+\end{fcode}
+
+\begin{fcode}{gf_element}{find_root}{const polynomial< gf_element > & $f$}
+  returns a single root of $f$.  Assumes that $f$ is monic and splits into distinct linear
+  factors.
 \end{fcode}
 
 %\begin{fcode}{void}{$f$.randomize}{const gf_p_base & $PB$, lidia_size_t n}

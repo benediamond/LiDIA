@@ -25,7 +25,8 @@
 #ifdef HAVE_CONFIG_H
 # include	"config.h"
 #endif
-#include	"LiDIA/eco_prime.h"
+#include "LiDIA/eco_prime.h"
+#include "LiDIA/gf_polynomial.h"
 #ifdef DEBUG
 #include	<cassert>
 #endif
@@ -43,7 +44,7 @@ void eco_prime::compute_divisor_of_division_polynomial (
 	ff_element & E2a,
 	ff_element & E2b)
 {
-	div_of_div_pol.set_modulus(p);
+	div_of_div_pol.assign_zero(A.get_field());
 	ff_element P1;
 	base_vector< ff_element > jltau;
 
@@ -116,16 +117,16 @@ void eco_prime
 {
 	ff_pol g;
 	lidia_size_t i;
-	base_vector< bigint > root_vector;
+	base_vector< gf_element > root_vector;
 
 	this->build_poly_in_Y (g, ftau[0]);
-	root_vector = find_roots(g);
+	root_vector = find_roots(g); // warning: will not be monic: beware
 
 	jltau.set_capacity(root_vector.get_size());
 	for (i = 0; i < root_vector.get_size(); i++) {
 		jltau[i] = root_vector[i];
 #ifdef DEBUG
-		assert(g(jltau[i].mantissa()).is_zero());
+		assert(g(jltau[i]).is_zero());
 #endif
 	}
 }
@@ -169,7 +170,7 @@ void eco_prime
     multiply(tmp_weierstrass, weierstrass_to_tmp_degree, tmp_divisor_coeff);
     subtract(rhs_series, rhs_series, tmp_weierstrass);
     
-    divisor.set_coefficient(tmp_divisor_coeff.mantissa(), tmp_degree);
+    divisor.set_coefficient(tmp_divisor_coeff, tmp_degree);
   }
   delete[] table_ptr;
 }
@@ -178,7 +179,7 @@ void eco_prime
 
 // ----------------------------------------------------------------
 // Computes the coefficients c_1, ..., c_kmax of the Weierstrass
-// P-function for curve (a, b) over GF(p) in wp_coeff.
+// P-function for curve (a, b) over GF(q) in wp_coeff.
 //
 
 void eco_prime
@@ -191,40 +192,30 @@ void eco_prime
 		kmax = 1;
 	wp_coeff.set_capacity(kmax+1);
 
-	if (kmax == 1) {
-		divide(wp_coeff[1], a, ff_element(5));
-		wp_coeff[1].negate();
+	divide(wp_coeff[1], a, ff_element(5));
+	wp_coeff[1].negate();
+	if (kmax == 1)
+		return;
+
+	divide(wp_coeff[2], b, ff_element(7));
+	wp_coeff[2].negate();
+	if (kmax == 2)
+		return;
+
+	ff_element tmp_sum, fraction, tmp_wp_coeff;
+	lidia_size_t denominator, k, h;
+
+	for (k = 3; k <= kmax; k++) { // changed to LEQ
+		tmp_sum = 0;
+		denominator = (k - 2) * (2 * k + 3);
+		divide(fraction, ff_element(3), denominator);
+
+		for (h = 1; h <= k - 2; h++) {
+			multiply(tmp_wp_coeff, wp_coeff[h], wp_coeff[k - 1 - h]);
+			add(tmp_sum, tmp_sum, tmp_wp_coeff);
+		}
+		multiply(wp_coeff[k], fraction, tmp_sum);
 	}
-	else
-		if (kmax == 2) {
-			divide(wp_coeff[1], a, ff_element(5));
-			wp_coeff[1].negate();
-
-			divide(wp_coeff[2], b, ff_element(7));
-			wp_coeff[2].negate();
-		}
-		else {
-			divide(wp_coeff[1], a, ff_element(5));
-			wp_coeff[1].negate();
-
-			divide(wp_coeff[2], b, ff_element(7));
-			wp_coeff[2].negate();
-
-			ff_element tmp_sum, fraction, tmp_wp_coeff;
-			lidia_size_t denominator, k, h;
-
-			for (k = 3; k < kmax; k++) {
-				tmp_sum = 0;
-				denominator = (k-2)*(2*k+3);
-				divide(fraction, ff_element(3), denominator);
-
-				for (h = 1; h <= k-2; h++) {
-					multiply(tmp_wp_coeff, wp_coeff[h], wp_coeff[k-1-h]);
-					add(tmp_sum, tmp_sum, tmp_wp_coeff);
-				}
-				multiply(wp_coeff[k], fraction, tmp_sum);
-			}
-		}
 }
 
 

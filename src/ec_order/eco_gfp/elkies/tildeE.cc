@@ -423,8 +423,6 @@ int eco_prime::tildeEA (ff_element & tildeEa, ff_element & tildeEb,
 	return rc;
 }
 
-
-
 int eco_prime::tildeEf (ff_element & tildeEa, ff_element & tildeEb,
                         ff_element & P1, const ff_element & g_tau,
 	                const ff_element & Ea, const ff_element & Eb)
@@ -584,13 +582,6 @@ int eco_prime::tildeEf (ff_element & tildeEa, ff_element & tildeEb,
   }
   
   
-  // compute value for f'(tau)
-  // f'(tau) = - j'(tau) * \frac{g_tau_1num}{g_tau_1den}
-  
-  negate   (g_tau_1, j_tau_1);
-  multiply (g_tau_1, g_tau_1, g_tau_1num);
-  divide   (g_tau_1, g_tau_1, g_tau_1den);
-  
   
   // compute value for E2_star = (E6*DJ)/(E4*DF)
   //                          = -(s/12) E2*(tau) in [Ma94]
@@ -603,7 +594,13 @@ int eco_prime::tildeEf (ff_element & tildeEa, ff_element & tildeEb,
 
   divide (E2_star, E2_star, tmp);
   
+  // compute value for f'(tau)
+  // f'(tau) = - j'(tau) * \frac{g_tau_1num}{g_tau_1den}
   
+  negate   (g_tau_1, j_tau_1);
+  multiply (g_tau_1, g_tau_1, g_tau_1num);
+  divide   (g_tau_1, g_tau_1, g_tau_1den);
+
   // compute value for E0_tau = DF/DJ
   //                         = -(s/12) E0(tau) in [Ma94]
   

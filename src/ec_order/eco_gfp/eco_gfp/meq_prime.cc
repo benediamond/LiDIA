@@ -24,6 +24,7 @@
 #include	"LiDIA/meq_prime.h"
 #include	"LiDIA/bigmod.h"
 #include        "LiDIA/osstream.h"
+#include	"LiDIA/gf_polynomial.h"
 #include	<cstdio>
 #include	<cstdlib>
 #include        <string>
@@ -720,87 +721,48 @@ meq_prime::read_row   (const bigint & p)
 
 
 void
-meq_prime::build_poly_in_X (Fp_polynomial & p, const bigmod & y)
+meq_prime::build_poly_in_X (polynomial< gf_element > & p, const gf_element & y)
 {
 	debug_handler ("meq_prime", "build_poly_in_X ()");
 
-	bigint m;
-	bigmod c;
-	bigmod ypow;
-	int i, j;
+	bigint m(y.get_field().characteristic());
+	gf_element c;
 
-	m = bigmod::modulus ();
-	p.set_modulus(m);
-	p.assign_zero();
-	meq_prime::reset();
+	p.assign_zero(y.get_field());
+	reset();
 
-	if (y.is_zero()) {
-#ifdef AIX_DEBUG
-		std::cout << "meq_prime::build_poly_in_X:: y is zero." << std::endl;
-#endif
-		for (i = 0; i <= static_cast<int>(l+1); i++) {
-			read_row (m);
-			p.set_coefficient (row[0], i);
+	p.set_degree(l + 1);
+
+	for (int i = 0; i <= static_cast<int>(l + 1); i++) {
+		read_row(m);
+		c.assign_zero(); // arg should be unnecessary
+		for (int j = static_cast<int>(v); j >= 0; j--) {
+			multiply(c, c, y);
+			add(c, c, row[j]);
 		}
-	}
-	else {
-#ifdef AIX_DEBUG
-		std::cout << "meq_prime::build_poly_in_X:: y is NOT zero." << std::endl;
-		std::cout << "meq_prime::build_poly_in_X:: v is " << v << std::endl;
-#endif
-		for (i = 0; i <= static_cast<int>(l+1); i++) {
-			read_row (m);
-			c.assign(row[v]);
-
-			for (j = static_cast<int>(v-1); j >= 0; j--) {
-				multiply(c, c, y);
-				add(c, c, row[j]);
-			}
-			p.set_coefficient (c.mantissa(), i);
-		}
+		p[i].assign(c);
 	}
 }
 
 
 
 void
-meq_prime::build_poly_in_Y (Fp_polynomial & p, const bigmod & x)
+meq_prime::build_poly_in_Y (polynomial< gf_element > & p, const gf_element & x)
 {
 	debug_handler ("meq_prime", "build_poly_in_Y()");
 
-	bigint m(bigmod::modulus());
-	bigmod c;
-	bigmod xpow;
-	int i, j;
+	bigint m(x.get_field().characteristic());
+	gf_element xpow;
+	xpow.assign_one(); // arg should be unnecessary
+	reset();
 
-	meq_prime::reset ();
-
-	p.set_modulus(m);
-	p.assign_zero();
-
-	if (x.is_zero()) {
-		read_row (m);
-
-		for (j = 0; j <= static_cast<int>(v); j++)
-			p.set_coefficient (row[j], j);
-	}
-	else {
-		read_row (m);
-
-		for (j = 0; j <= static_cast<int>(v); j++)
-			p.set_coefficient (row[j], j);
-
-		xpow.assign(x);
-
-		for (i = 1; i <= static_cast<int>(l+1); i++) {
-			read_row (m);
-
-			for (j = 0; j <= static_cast<int>(v); j++) {
-				add(c, static_cast<bigint>(p[j]), row[j] * xpow);
-				p.set_coefficient (c.mantissa(), j);
-			}
-			multiply(xpow, xpow, x);
-		}
+	p.assign_zero(x.get_field());
+	p.set_degree(v); // allocate memory
+	for (int i = 0; i <= static_cast<int>(l + 1); i++) {
+		read_row(m);
+		for (int j = 0; j <= static_cast<int>(v); j++)
+			add(p[j], p[j], row[j] * xpow);
+		multiply(xpow, xpow, x);
 	}
 }
 

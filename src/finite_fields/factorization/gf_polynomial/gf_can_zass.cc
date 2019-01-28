@@ -188,7 +188,7 @@ root_edf(factorization< gf_polynomial > &factors, const gf_polynomial & f)
 	bool verbose = single_factor< gf_polynomial >::verbose();
 
 	if (verbose) t.start("finding roots...");
-	roots.assign(find_roots(f));
+	roots.assign(find_roots(f, 1));
 	if (verbose) t.stop();
 
 	lidia_size_t r = roots.size();
@@ -247,7 +247,7 @@ void edf(factorization< gf_polynomial > &factors, const gf_poly_modulus &F,
 			if (verbose) std::cerr << "." << std::flush;
 		} while (!checked_min_poly(h, g, r, F));
 		base_vector< gf_element > roots;
-		roots.assign(find_roots(h));
+		roots.assign(find_roots(h, 1));
 		find_irred_factors(factors, f, g, roots);
 	}
 	else {

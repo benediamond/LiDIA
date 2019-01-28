@@ -57,13 +57,8 @@ bool eco_prime::schoof_algorithm ()
 	if (info)
 		std::cout << "\n\nUsing Schoof's algorithm for l = " << l << " : " << std::flush;
 
-	xq.set_modulus(p);
-	xq2.set_modulus(p);
-	yq.set_modulus(p);
-	yq2.set_modulus(p);
-
 	compute_psi(div_pol, l); // compute the l-th division polynomial
-	div_pol.make_monic(); // and it's ff_polmod
+	divide(div_pol, div_pol, div_pol.lead_coeff()); // div_pol.make_monic()
 	pdiv_pol.build(div_pol);
 
 	power_x(xq, pn, pdiv_pol); // compute X^q and X^(q^2)

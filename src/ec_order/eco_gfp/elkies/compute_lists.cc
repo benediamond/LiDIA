@@ -20,10 +20,8 @@
 #ifdef HAVE_CONFIG_H
 # include	"config.h"
 #endif
-#include	"LiDIA/eco_prime.h"
-#include	"LiDIA/Fp_polynomial.h"
-
-
+#include "LiDIA/eco_prime.h"
+#include "LiDIA/gf_polynomial.h"
 
 #ifdef LIDIA_NAMESPACE
 namespace LiDIA {
@@ -58,7 +56,7 @@ eco_prime::compute_d_list (lidia_size_t * & dlist)
 	for (d = 2; d <= deg; d++) {
 		if (deg % d == 0) {
 			h = deg / d;
-			if ((iss && !((h*(d-1)) & 1)) || (!iss && ((h*(d-1)) & 1)))
+			if (iss != ((h * (d - 1)) & 1))
 				dlist[i++] = d;
 		}
 	}
@@ -92,7 +90,7 @@ eco_prime::compute_ev_list (lidia_size_t * dlist, lidia_size_t * & ev)
 	invert(qinv, q);
 
 	for (j = 1; j <= n; j++) {
-		// compute order of j^2/p in GF(l)
+		// compute order of j^2/q in GF(l)
 		//
 		alpha = ff1(j*j);
 		multiply(alpha, alpha, qinv);
@@ -128,16 +126,15 @@ void eco_prime::refine_ev_list(const ff_pol & fC, lidia_size_t * & ev_list)
 
 	lidia_size_t i, j, d = (l-1)/2;
 	lidia_size_t r, s, a, a2;
-	bigint h;
-	ff_pol curve;
+	gf_element h;
+	ff_pol curve(A.get_field());
 
-	curve.set_modulus(A.modulus());
 	curve.set_coefficient(3);
-	curve.set_coefficient(A.mantissa(), 1);
-	curve.set_coefficient(B.mantissa(), 0);
+	curve.set_coefficient(A, 1);
+	curve.set_coefficient(B, 0);
 
 	resultant(h, fC, curve);
-	j = jacobi(h, pn);
+	j = h.is_square() ? 1 : -1; // j = jacobi(h, pn); weird to use also as int
 
 	for (i = 1; i <= ev_list[0]; i++) {
 		a = ev_list[i];
@@ -150,7 +147,7 @@ void eco_prime::refine_ev_list(const ff_pol & fC, lidia_size_t * & ev_list)
 			if ((s*a2) % l > static_cast<unsigned int>(d))
 				r++;
 		}
-		if (!((j == 1 && r % 2 == 0) || (j == -1 && r % 2 == 1)))
+		if ((j == 1) != (r % 2 == 0))
 			ev_list[i] = - ev_list[i];
 	}
 

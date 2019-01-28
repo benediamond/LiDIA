@@ -26,16 +26,14 @@
 #ifndef LIDIA_WEP_RAT_FUNCTION_H_GUARD_
 #define LIDIA_WEP_RAT_FUNCTION_H_GUARD_
 
-
-
-#ifndef LIDIA_BIGMOD_H_GUARD_
-# include	"LiDIA/bigmod.h"
+#ifndef LIDIA_GF_ELEMENT_H_GUARD_
+#include "LiDIA/gf_element.h"
 #endif
-#ifndef LIDIA_FP_RATIONAL_FUNCTION_H_GUARD_
-# include	"LiDIA/Fp_rational_function.h"
+#ifndef LIDIA_GF_RATIONAL_FUNCTION_H_GUARD_
+#include "LiDIA/gf_rational_function.h"
 #endif
-#ifndef LIDIA_FP_POLYNOMIAL_H_GUARD_
-# include	"LiDIA/Fp_polynomial.h"
+#ifndef LIDIA_GF_POLYNOMIAL_H_GUARD_
+#include "LiDIA/gf_polynomial.h"
 #endif
 
 
@@ -55,11 +53,11 @@ namespace LiDIA {
 
 class wep_rat_function
 {
-public:		
-	typedef bigmod ff_element; 
-	typedef Fp_polynomial ff_pol; 
-	typedef Fp_rational_function ff_rat; 
-	typedef Fp_poly_modulus  ff_pol_m; 
+public: // why are these aliases re-defined here?
+	typedef gf_element ff_element;
+	typedef polynomial< gf_element > ff_pol;
+	typedef gf_rational_function ff_rat;
+	typedef gf_poly_modulus ff_pol_m;
 
 private:
 
@@ -181,12 +179,12 @@ void mult_by_curve(wep_rat_function::ff_pol & f,
 {
 	wep_rat_function::ff_pol h;
 
-	h.set_modulus(wep_rat_function::a.modulus());
+	h.assign_zero(wep_rat_function::a.get_field());
 	multiply_by_x_mod(h, f, ff);
 	multiply_by_x_mod(h, h, ff);
-	add(h, h, wep_rat_function::a.mantissa() * f);
+	add(h, h, wep_rat_function::a * f);
 	multiply_by_x_mod(h, h, ff);
-	add(f, h, wep_rat_function::b.mantissa() * f);
+	add(f, h, wep_rat_function::b * f);
 }
 
 

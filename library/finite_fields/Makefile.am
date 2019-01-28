@@ -95,6 +95,7 @@ libLiDIA_FF_la_SOURCES = \
 	$(LIDIA_FF_SRCDIR)/gf_polynomial/gf_poly_argument.cc \
 	$(LIDIA_FF_SRCDIR)/gf_polynomial/gf_poly_modulus.cc \
 	$(LIDIA_FF_SRCDIR)/gf_polynomial/gf_polynomial.cc \
+	$(LIDIA_FF_SRCDIR)/gf_rational_function/gf_rational_function.cc \
 	$(LIDIA_FF_SRCDIR)/gfpn/galois_field.cc \
 	$(LIDIA_FF_SRCDIR)/gfpn/galois_field_iterator.cc \
 	$(LIDIA_FF_SRCDIR)/gfpn/galois_field_rep.cc \
@@ -116,6 +117,7 @@ libLiDIA_FF_la_SOURCES = \
 	$(LIDIA_FF_SRCDIR)/instantiate/bv_spc_bigint.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/bv_spc_bigmod.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/bv_spc_bigrational.cc \
+	$(LIDIA_FF_SRCDIR)/instantiate/bv_spc_gf_element.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/bv_spc_udigit_mod.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/dpsr_bigint.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/dpsr_bigrational.cc \
@@ -130,10 +132,13 @@ libLiDIA_FF_la_SOURCES = \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_bigint.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_bigmod.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_bigrational.cc \
+	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_gf_element.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_udigit_mod.cc \
 	$(LIDIA_FF_SRCDIR)/powser/dpsr_bigmod.cc \
+	$(LIDIA_FF_SRCDIR)/powser/dpsr_gf_element.cc \
 	$(LIDIA_FF_SRCDIR)/powser/dpsr_udigit_mod.cc \
-	$(LIDIA_FF_SRCDIR)/powser/spsr_bigmod.cc
+	$(LIDIA_FF_SRCDIR)/powser/spsr_bigmod.cc \
+	$(LIDIA_FF_SRCDIR)/powser/spsr_gf_element.cc
 
 
 ##	-------
@@ -164,6 +169,7 @@ ffinclude_HEADERS = \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/coeff_sparse_power_series.cc \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/coeff_sparse_power_series.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/dense_power_series_bigmod.h \
+	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/dense_power_series_gf_element.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/dense_power_series_udigit_mod.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/fft_mul_mod.inl \
 	$(LIDIA_FF_PKGINCLUDEDIR)/finite_fields/galois_field_rep.h \
@@ -190,6 +196,7 @@ pkginclude_HEADERS = \
 	$(LIDIA_FF_PKGINCLUDEDIR)/gf2n_rational_function.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/gf_element.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/gf_polynomial.h \
+	$(LIDIA_FF_PKGINCLUDEDIR)/gf_rational_function.h \
 	$(LIDIA_FF_PKGINCLUDEDIR)/sparse_power_series.cc \
 	$(LIDIA_FF_PKGINCLUDEDIR)/sparse_power_series.h
 
@@ -230,4 +237,3 @@ uninstall-hook:
 
 # Delete half-made targets when their commands fail
 .DELETE_ON_ERROR:
-

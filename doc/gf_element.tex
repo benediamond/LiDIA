@@ -309,11 +309,11 @@ Let $e$ be an instance of type \code{gf_element}.
   \code{galois_field::generator()} is more efficient.
 \end{fcode}
 
-\begin{cfcode}{unsigned int}{$e$.get_absolute_degree}{}
+\begin{cfcode}{unsigned int}{$e$.absolute_degree}{}
   returns the extension degree $n$ of the current field over which $e$ is defined.
 \end{cfcode}
 
-\begin{cfcode}{unsigned int}{$e$.get_relative_degree}{}
+\begin{cfcode}{unsigned int}{$e$.relative_degree}{}
   returns the minimal extension degree $k$ of the field $\GF(p^k)$ over the prime field $\GF(p)$
   such that $e$ is an element of $\GF(p^k)$ ($p$ denotes the characteristic of the corresponding
   field).

@@ -59,15 +59,16 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	memory_handler (psi, "eco_prime::init_psi_comp()",
 			"Allocating psi_pow");
 
+	galois_field K(A.get_field());
 	if (nmax >= 2)
 		for (i = 5; i <= nmax+3; i++) {
 			(psi_pow[i]).pow1 = new ff_pol;
 			(psi_pow[i]).pow2 = new ff_pol;
 			(psi_pow[i]).pow3 = new ff_pol;
 
-			(psi_pow[i]).pow1->set_modulus(p);
-			(psi_pow[i]).pow2->set_modulus(p);
-			(psi_pow[i]).pow3->set_modulus(p);
+			(psi_pow[i]).pow1->assign_zero(K);
+			(psi_pow[i]).pow2->assign_zero(K);
+			(psi_pow[i]).pow3->assign_zero(K);
 		}
 
 	// psi_0, psi_0^2, psi_0^3
@@ -76,13 +77,9 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	(psi_pow[0]).pow2 = new ff_pol;
 	(psi_pow[0]).pow3 = new ff_pol;
 
-	(psi_pow[0]).pow1->set_modulus(p);
-	(psi_pow[0]).pow2->set_modulus(p);
-	(psi_pow[0]).pow3->set_modulus(p);
-
-	(*(psi_pow[0].pow1)).assign_zero();
-	(*(psi_pow[0].pow2)).assign_zero();
-	(*(psi_pow[0].pow3)).assign_zero();
+	(psi_pow[0]).pow1->assign_zero(K);
+	(psi_pow[0]).pow2->assign_zero(K);
+	(psi_pow[0]).pow3->assign_zero(K);
 
 	// psi_1, psi_1^2, psi_1^3
 
@@ -90,13 +87,9 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	(psi_pow[1]).pow2 = new ff_pol;
 	(psi_pow[1]).pow3 = new ff_pol;
 
-	(psi_pow[1]).pow1->set_modulus(p);
-	(psi_pow[1]).pow2->set_modulus(p);
-	(psi_pow[1]).pow3->set_modulus(p);
-
-	(*(psi_pow[1].pow1)).assign_one();
-	(*(psi_pow[1].pow2)).assign_one();
-	(*(psi_pow[1].pow3)).assign_one();
+	(psi_pow[1]).pow1->assign_one(K);
+	(psi_pow[1]).pow2->assign_one(K);
+	(psi_pow[1]).pow3->assign_one(K);
 
 	// psi_2, psi_2^2, psi_2^3 
 
@@ -105,18 +98,13 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	psi_pow[2].pow3 = new ff_pol;
 
 
-	psi_pow[2].pow1->set_modulus(p);
-	psi_pow[2].pow2->set_modulus(p);
-	psi_pow[2].pow3->set_modulus(p);
+	psi_pow[2].pow1->assign_zero(K);
+	psi_pow[2].pow2->assign_zero(K);
+	psi_pow[2].pow3->assign_zero(K);
 
-	tmp = ff_element(2);
-	psi_pow[2].pow1->set_coefficient (tmp.mantissa(), 0);
-
-	tmp = ff_element(4);
-	psi_pow[2].pow2->set_coefficient (tmp.mantissa(), 0);
-
-	tmp = ff_element(8);
-	psi_pow[2].pow3->set_coefficient (tmp.mantissa(), 0);
+	psi_pow[2].pow1->set_coefficient(2, 0);
+	psi_pow[2].pow2->set_coefficient(4, 0);
+	psi_pow[2].pow3->set_coefficient(8, 0);
 
 
 	// psi_3, psi_3^2, psi_3^3
@@ -126,21 +114,15 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	psi_pow[3].pow3 = new ff_pol;
 
 
-	psi_pow[3].pow1->set_modulus(p);
-	psi_pow[3].pow2->set_modulus(p);
-	psi_pow[3].pow3->set_modulus(p);
+	psi_pow[3].pow1->assign_zero(K);
+	psi_pow[3].pow1->set_coefficient(3, 4);
+	psi_pow[3].pow1->set_coefficient(6 * A, 2);
+	psi_pow[3].pow1->set_coefficient(12 * B, 1);
 
-	tmp = ff_element(3);
-	psi_pow[3].pow1->set_coefficient (tmp.mantissa(), 4);
-	tmp = ff_element(0);
-	psi_pow[3].pow1->set_coefficient (tmp.mantissa(), 3);
-	multiply (tmp2, ff_element(6), A);
-	psi_pow[3].pow1->set_coefficient (tmp2.mantissa(), 2);
-	multiply (tmp2, ff_element(12), B);
-	psi_pow[3].pow1->set_coefficient (tmp2.mantissa(), 1);
 	square (tmp, A);
 	negate (tmp, tmp);
-	psi_pow[3].pow1->set_coefficient (tmp.mantissa(), 0);
+	psi_pow[3].pow1->set_coefficient (tmp, 0);
+
 
 	remainder (*(psi_pow[3].pow1), *(psi_pow[3].pow1), f);
 	square (*(psi_pow[3].pow2), *(psi_pow[3].pow1), f);
@@ -153,39 +135,28 @@ void eco_prime::init_psi_comp (PsiPowers* & psi_pow,
 	psi_pow[4].pow3 = new ff_pol;
 
 
-	psi_pow[4].pow1->set_modulus(p);
-	psi_pow[4].pow2->set_modulus(p);
-	psi_pow[4].pow3->set_modulus(p);
-
-	tmp =  ff_element(4);
-	psi_pow[4].pow1->set_coefficient (tmp.mantissa(), 6);
-
-	tmp =  ff_element(0);
-	psi_pow[4].pow1->set_coefficient (tmp.mantissa(), 5);
-
-	multiply (tmp2, ff_element(20), A);
-	psi_pow[4].pow1->set_coefficient (tmp2.mantissa(), 4);
-
-	multiply (tmp2, ff_element(80), B);
-	psi_pow[4].pow1->set_coefficient (tmp2.mantissa(), 3);
+	psi_pow[4].pow1->assign_zero(K);
+	psi_pow[4].pow1->set_coefficient(4, 6);
+	psi_pow[4].pow1->set_coefficient(20 * A, 4);
+	psi_pow[4].pow1->set_coefficient(80 * B, 3);
 
 	multiply (tmp, A, B);
-	multiply (tmp, tmp, ff_element(16));
+	multiply (tmp, 16, tmp);
 	negate (tmp2, tmp);
-	psi_pow[4].pow1->set_coefficient (tmp2.mantissa(), 1);
+	psi_pow[4].pow1->set_coefficient(tmp2, 1);
 
 	square(tmp, A);
-	multiply (tmp2, tmp, ff_element(20));
+	multiply (tmp2, 20, tmp);
 	negate (tmp2, tmp2);
-	psi_pow[4].pow1->set_coefficient (tmp2.mantissa(), 2);
+	psi_pow[4].pow1->set_coefficient (tmp2, 2);
 
 	multiply    (tmp, tmp, A);
 	square (tmp2, B);
-	multiply(tmp2, tmp2, ff_element(8));
+	multiply(tmp2, 8, tmp2);
 	add    (tmp, tmp, tmp2);
-	multiply(tmp, tmp, ff_element(4));
+	multiply(tmp, 4, tmp);
 	negate (tmp2, tmp);
-	psi_pow[4].pow1->set_coefficient (tmp2.mantissa(), 0);
+	psi_pow[4].pow1->set_coefficient (tmp2, 0);
 
 	remainder (*(psi_pow[4].pow1), *(psi_pow[4].pow1), f);
 	square (*(psi_pow[4].pow2), *(psi_pow[4].pow1), f);
@@ -220,7 +191,7 @@ void eco_prime::next_psi (PsiPowers* & psi_pow,
 		subtract (*(psi_pow[top].pow1), *(psi_pow[top].pow1), *(psi_pow[top].pow2));
 
 		multiply (*(psi_pow[top].pow1), *(psi_pow[k].pow1), *(psi_pow[top].pow1), f);
-		multiply (*(psi_pow[top].pow1), *(psi_pow[top].pow1), inv2.mantissa());
+		multiply (*(psi_pow[top].pow1), inv2, *(psi_pow[top].pow1));
 	}
 	else {
 		top++;
@@ -335,18 +306,18 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 	lidia_size_t i, pos, n, j;
 	lidia_size_t size;
 
+	galois_field K(A.get_field());
+
 	ff_pol  ***psi;
-	ff_pol  sqrY;
+	ff_pol  sqrY; // sqrY.set_modulus(p); // init. will be done within CurveEqn
 	ff_element qqq;
 	ff_element ttt;
 	ff_element inv2;
 	ff_element tmp, tmp2;
 
-	ttt = ff_element(0);
-	sqrY.set_modulus(p);
 	size = comparator< lidia_size_t >::max(k, 4);
 
-	inv2 = ff_element(2);
+	inv2.assign(2);
 	invert (inv2, inv2);
 
 	to_use = new lidia_size_t*[size+1];
@@ -368,33 +339,30 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 
 	build_plan (to_use, k);
 
-	CurveEqn (sqrY, p, A, B, f);
+	CurveEqn (sqrY, A, B, f);
 	square (sqrY, sqrY, f);
 
 	psi[0][0] = new ff_pol; to_use[0][0] ++;
 	psi[0][1] = new ff_pol; to_use[0][1] ++;
 	psi[0][2] = new ff_pol; to_use[0][2] ++;
 
-	psi[0][0]->set_modulus (p);
-	psi[0][1]->set_modulus (p);
-	psi[0][2]->set_modulus (p);
+	psi[0][0]->assign_zero(K);
+	psi[0][1]->assign_zero(K);
+	psi[0][2]->assign_zero(K);
 
 	// psi_1, psi_1^2, psi_1^3 
 
 	psi[1][0] = new ff_pol;
-	psi[1][0]->set_modulus (p);
-	psi[1][0]->set_coefficient (0);
+	psi[1][0]->assign_one(K);
 
 	if (to_use[1][1] > 0) {
 		psi[1][1] = new ff_pol;
-		psi[1][1]->set_modulus (p);
-		psi[1][1]->set_coefficient (0);
+		psi[1][1]->assign_one(K);
 	}
 
 	if(to_use[1][2] > 0) {
 		psi[1][2] = new ff_pol;
-		psi[1][2]->set_modulus (p);
-		psi[1][2]->set_coefficient (0);
+		psi[1][2]->assign_one(K);
 	}
 
 	to_use[1][0]++;
@@ -402,24 +370,20 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 	// psi_2, psi_2^2, psi_2^3 
 
 	psi[2][0] = new ff_pol;
-	psi[2][0]->set_modulus(p);
-
-	ttt = ff_element(2);
-	psi[2][0]->set_coefficient (ttt.mantissa(), 0);
+	psi[2][0]->assign_zero(K);
+	psi[2][0]->set_coefficient(2, 0);
 
 	if (to_use[2][1] > 0) {
 		psi[2][1] = new ff_pol;
-		psi[2][1]->set_modulus(p);
-		ttt = ff_element(4);
-		psi[2][1]->set_coefficient (ttt.mantissa(), 0);
+		psi[2][1]->assign_zero(K);
+		psi[2][1]->set_coefficient(4, 0);
 	}
 
 	if (to_use[2][2] > 0)   // ?? wo sind die y^i terme ??
 	{
 		psi[2][2] = new ff_pol;
-		psi[2][2]->set_modulus(p);
-		ttt = ff_element(8);
-		psi[2][2]->set_coefficient(ttt.mantissa(), 0);
+		psi[2][2]->assign_zero(K);
+		psi[2][2]->set_coefficient(8, 0);
 	}
 
 	to_use[2][0]++;
@@ -428,18 +392,13 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 	// psi_3, psi_3^2, psi_3^3 
 
 	psi[3][0] = new ff_pol;
-	psi[3][0]->set_modulus(p);
-	ttt = ff_element(3);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 4);
-	ttt = ff_element(0);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 3);
-	multiply(ttt, ff_element(6), A);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 2);
-	multiply (ttt, ff_element(12), B);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 1);
+	psi[3][0]->assign_zero(K);
+	psi[3][0]->set_coefficient(3, 4);
+	psi[3][0]->set_coefficient(6 * A, 2);
+	psi[3][0]->set_coefficient(12 * B, 1);
 	square(ttt, A);
-	negate (ttt, ttt);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 0);
+	negate(ttt, ttt);
+	psi[3][0]->set_coefficient(ttt, 0);
 	remainder (*psi[3][0], *psi[3][0], f);
 
 	if (to_use[3][1] > 0 || to_use[3][2] > 0) {
@@ -459,32 +418,27 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 	// psi_4, psi_4^2, psi_4^3
 
 	psi[4][0] = new ff_pol;
-	psi[4][0]->set_modulus(p);
-	ttt = ff_element(4);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 6);
-	ttt = ff_element(0);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 5);
-	multiply (ttt, ff_element(20), A);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 4);
-	multiply (ttt, ff_element(80), B);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 3);
+	psi[4][0]->assign_zero(K);
+	psi[4][0]->set_coefficient(4, 6);
+	psi[4][0]->set_coefficient(20 * A, 4);
+	psi[4][0]->set_coefficient(80 * B, 3);
 	multiply (tmp, A, B);
-	multiply (ttt, tmp, ff_element(16));
+	multiply (ttt, 16, tmp);
 	negate (ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 1);
+	psi[4][0]->set_coefficient(ttt, 1);
 
 	square (tmp, A);
-	multiply(ttt, tmp, ff_element(20));
+	multiply(ttt, 20, tmp);
 	negate (ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 2);
+	psi[4][0]->set_coefficient(ttt, 2);
 
 	multiply (tmp, tmp, A);
-	multiply (tmp, tmp, ff_element(4)); // tmp = 4.A^3
+	multiply (tmp, 4, tmp); // tmp = 4.A^3
 	square (tmp2, B);
-	multiply (tmp2, ff_element(32), tmp2);
+	multiply (tmp2, 32, tmp2);
 	add (ttt, tmp, tmp2);
 	negate(ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 0);
+	psi[4][0]->set_coefficient(ttt, 0);
 
 	remainder (*psi[4][0], *psi[4][0], f);
 
@@ -513,7 +467,6 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 				pos ++;
 
 			psi[pos][0] = new ff_pol;
-			psi[pos][0]->set_modulus(p);
 
 			// Computation of psi[pos]
 			if (pos & 1) {
@@ -552,7 +505,7 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 				multiply  (*psi[pos][0], *psi[pos][0], *psi[n][0], f);
 
 				qqq = inv2;
-				multiply (*psi[pos][0], *psi[pos][0], qqq.mantissa());
+				multiply (*psi[pos][0], qqq, *psi[pos][0]);
 				to_use[n+2][0] --;
 				to_use[n-1][1] --;
 				to_use[n-2][0] --;
@@ -617,6 +570,8 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	lidia_size_t i, pos, n, j;
 	lidia_size_t size;
 
+	galois_field K(A.get_field());
+
 	ff_pol  ***psi;
 	ff_pol  sqrY;
 	ff_element qqq;
@@ -624,11 +579,9 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	ff_element inv2;
 	ff_element tmp, tmp2;
 
-	ttt = ff_element(0);
-	sqrY.set_modulus(p);
 	size = comparator< lidia_size_t >::max(k, 4);
 
-	inv2 = ff_element(2);
+	inv2.assign(2);
 	invert (inv2, inv2);
 
 	to_use = new lidia_size_t*[size+1];
@@ -649,37 +602,34 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 
 	build_plan (to_use, k);
 
-	ff_pol f;
-	f.set_modulus(p);
-	f.set_coefficient(4);
+	ff_pol f(K); // what's the purpose of this?
+	f.set_degree(4);
+	f[4].assign_one(K); // arg unnecessary
 
-	CurveEqn (sqrY, p, A, B, f);
+	CurveEqn (sqrY, A, B, f);
 	square (sqrY, sqrY);
 
 	psi[0][0] = new ff_pol; to_use[0][0] ++;
 	psi[0][1] = new ff_pol; to_use[0][1] ++;
 	psi[0][2] = new ff_pol; to_use[0][2] ++;
 
-	psi[0][0]->set_modulus (p);
-	psi[0][1]->set_modulus (p);
-	psi[0][2]->set_modulus (p);
+	psi[0][0]->assign_zero(K);
+	psi[0][1]->assign_zero(K);
+	psi[0][2]->assign_zero(K);
 
 	// psi_1, psi_1^2, psi_1^3 
 
 	psi[1][0] = new ff_pol;
-	psi[1][0]->set_modulus (p);
-	psi[1][0]->set_coefficient (0);
+	psi[1][0]->assign_one(K);
 
 	if (to_use[1][1] > 0) {
 		psi[1][1] = new ff_pol;
-		psi[1][1]->set_modulus (p);
-		psi[1][1]->set_coefficient (0);
+		psi[1][1]->assign_one(K);
 	}
 
 	if(to_use[1][2] > 0) {
 		psi[1][2] = new ff_pol;
-		psi[1][2]->set_modulus (p);
-		psi[1][2]->set_coefficient (0);
+		psi[1][2]->assign_one(K);
 	}
 
 	to_use[1][0]++;
@@ -687,24 +637,20 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	// psi_2, psi_2^2, psi_2^3 
 
 	psi[2][0] = new ff_pol;
-	psi[2][0]->set_modulus(p);
-
-	ttt = ff_element(2);
-	psi[2][0]->set_coefficient (ttt.mantissa(), 0);
+	psi[2][0]->assign_zero(K);
+	psi[2][0]->set_coefficient(2, 0);
 
 	if (to_use[2][1] > 0) {
 		psi[2][1] = new ff_pol;
-		psi[2][1]->set_modulus(p);
-		ttt = ff_element(4);
-		psi[2][1]->set_coefficient (ttt.mantissa(), 0);
+		psi[2][1]->assign_zero(K);
+		psi[2][1]->set_coefficient(4, 0);
 	}
 
 	if (to_use[2][2] > 0) {
 		// ?? wo sind die y^i terme ??
 		psi[2][2] = new ff_pol;
-		psi[2][2]->set_modulus(p);
-		ttt = ff_element(8);
-		psi[2][2]->set_coefficient(ttt.mantissa(), 0);
+		psi[2][2]->assign_zero(K);
+		psi[2][2]->set_coefficient(8, 0);
 	}
 
 	to_use[2][0]++;
@@ -713,18 +659,13 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	// psi_3, psi_3^2, psi_3^3 
 
 	psi[3][0] = new ff_pol;
-	psi[3][0]->set_modulus(p);
-	ttt = ff_element(3);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 4);
-	ttt = ff_element(0);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 3);
-	multiply(ttt, ff_element(6), A);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 2);
-	multiply (ttt, ff_element(12), B);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 1);
+	psi[3][0]->assign_zero(K);
+	psi[3][0]->set_coefficient(3, 4);
+	psi[3][0]->set_coefficient(6 * A, 2);
+	psi[3][0]->set_coefficient(12 * B, 1);
 	square(ttt, A);
 	negate (ttt, ttt);
-	psi[3][0]->set_coefficient(ttt.mantissa(), 0);
+	psi[3][0]->set_coefficient(ttt, 0);
 
 	if (to_use[3][1] > 0 || to_use[3][2] > 0) {
 		psi[3][1] = new ff_pol;
@@ -743,32 +684,29 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	// psi_4, psi_4^2, psi_4^3
 
 	psi[4][0] = new ff_pol;
-	psi[4][0]->set_modulus(p);
-	ttt = ff_element(4);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 6);
-	ttt = ff_element(0);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 5);
-	multiply (ttt, ff_element(20), A);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 4);
-	multiply (ttt, ff_element(80), B);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 3);
+	psi[4][0]->assign_zero(K);
+	psi[4][0]->set_degree(6);
+	(*psi[4][0])[6].assign(4); // why did i use pointers here and nowhere else?
+	(*psi[4][0])[4].assign(20 * A);
+	(*psi[4][0])[3].assign(80 * B);
+
 	multiply (tmp, A, B);
-	multiply (ttt, tmp, ff_element(16));
+	multiply (ttt, 16, tmp);
 	negate (ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 1);
+	(*psi[4][0])[1].assign(ttt);
 
 	square (tmp, A);
-	multiply(ttt, tmp, ff_element(20));
+	multiply(ttt, 20, tmp);
 	negate (ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 2);
+	(*psi[4][0])[2].assign(ttt);
 
 	multiply (tmp, tmp, A);
-	multiply (tmp, tmp, ff_element(4)); // tmp = 4.A^3
+	multiply (tmp, 4, tmp); // tmp = 4.A^3
 	square (tmp2, B);
-	multiply (tmp2, ff_element(32), tmp2);
+	multiply (tmp2, 32, tmp2);
 	add (ttt, tmp, tmp2);
 	negate(ttt, ttt);
-	psi[4][0]->set_coefficient(ttt.mantissa(), 0);
+	(*psi[4][0])[1].assign(ttt);
 
 	if (to_use[4][1] > 0 || to_use[4][2] > 0) {
 		psi[4][1] = new ff_pol;
@@ -795,7 +733,6 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 				pos ++;
 
 			psi[pos][0] = new ff_pol;
-			psi[pos][0]->set_modulus(p);
 
 			// Computation of psi[pos]
 			if (pos & 1) {
@@ -834,7 +771,7 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 				multiply  (*psi[pos][0], *psi[pos][0], *psi[n][0]);
 
 				qqq = inv2;
-				multiply (*psi[pos][0], *psi[pos][0], qqq.mantissa());
+				multiply (*psi[pos][0], qqq, *psi[pos][0]);
 				to_use[n+2][0] --;
 				to_use[n-1][1] --;
 				to_use[n-2][0] --;

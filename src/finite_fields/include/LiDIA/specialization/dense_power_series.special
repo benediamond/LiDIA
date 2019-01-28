@@ -33,3 +33,11 @@
 # endif
 
 #endif
+
+#ifdef LIDIA_CLASS_GF_ELEMENT
+
+# ifndef __LIDIA_DENSE_POWER_SERIES_GF_ELEMENT_H
+#  include	<LiDIA/finite_fields/dense_power_series_gf_element.h>
+# endif
+
+#endif

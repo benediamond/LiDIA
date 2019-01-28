@@ -7593,7 +7593,7 @@
 	doc/.cvsignore, examples/linear_algebra/.cvsignore,
 	examples/number_fields/.cvsignore:
 
-	`.cvsignore's für die von den Autotools erzeugten Dateien
+	`.cvsignore's fï¿½r die von den Autotools erzeugten Dateien
 
 2002-10-05 17:06  ccorn
 

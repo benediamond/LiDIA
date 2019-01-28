@@ -168,15 +168,11 @@ void eco_prime::set_curve (const gf_element & a, const gf_element & b)
 {
   p.assign(a.characteristic());
   pn.assign(a.get_field().number_of_elements());
-  if (p != pn) {
-    lidia_error_handler("eco_prime", "finite fields of extension degree > 1"
-			" not yet implemented");
-  }
 
-  bigmod::set_modulus(p);
+  gf_element::set_uninitialized_field(a.get_field());
 
-  A.assign(a.polynomial_rep().const_term());
-  B.assign(b.polynomial_rep().const_term());
+  A.assign(a);
+  B.assign(b);
   compute_jinv(jinv, A, B);
   
   E_.set_coefficients(a, b);
@@ -224,13 +220,8 @@ void eco_prime::compute_splitting_type()
   
   if (sp_type != UNKNOWN)
     return;
-  
-  meq_pol.set_modulus(p);
-  f_x.set_modulus(p);
-  f_xp.set_modulus(p);
-  f_gcd.set_modulus(p);
-  
-  f_x.assign_x();
+
+  f_x.assign_x(A.get_field());
   this->build_poly_in_X(meq_pol, jinv);
   meq_pol_mod.build(meq_pol);
   
@@ -241,7 +232,7 @@ void eco_prime::compute_splitting_type()
 #endif
   
   power_x(f_xp, pn, meq_pol_mod);
-  f_gcd = gcd(f_xp - f_x, meq_pol);
+  f_gcd.assign(gcd(f_xp - f_x, meq_pol)); // should be monic
   
 #ifdef TIMING
   t.stop_timer();
@@ -280,7 +271,7 @@ void eco_prime::compute_splitting_type()
 	ftau[0] = find_root(f_gcd);
 	
 #ifdef DEBUG
-	assert(meq_pol(ftau[0].mantissa()).is_zero());
+	assert(meq_pol(ftau[0]).is_zero());
 #endif
 	sp_type = ONE_SUBGRP_INV;
 	if (info) {
@@ -295,8 +286,8 @@ void eco_prime::compute_splitting_type()
 	ftau[0] = find_root(f_gcd);
 	divide(ftau[1], ff_element(f_gcd.const_term()), ftau[0]);
 #ifdef DEBUG
-	assert(meq_pol(ftau[0].mantissa()).is_zero());
-	assert(meq_pol(ftau[1].mantissa()).is_zero());
+	assert(meq_pol(ftau[0]).is_zero());
+	assert(meq_pol(ftau[1]).is_zero()); // when is ftau[1] used?
 #endif
 	sp_type = TWO_SUBGRPS_INV;
 	if (info) {
@@ -317,7 +308,7 @@ void eco_prime::compute_splitting_type()
 	    else {
 	      divide(meq_pol, meq_pol, f_gcd);
 	      meq_pol_mod.build(meq_pol);
-	      remainder(f_xp, f_xp, meq_pol);
+	      remainder(f_xp, f_xp, meq_pol_mod); // using mod instead?
 	      
 	      udigit lcm, hlcm;
 	      
@@ -676,10 +667,10 @@ probabilistic_correctness_proof(const bigint & res,
 bool eco_prime
 ::is_supersingular(bigint & res)
 {
-	unsigned int d = get_absolute_degree(A);
+	unsigned int d = A.absolute_degree();
 	bigint m;
-	bigint p  = characteristic(A);
-	bigint pn = number_of_elements(A);
+	bigint p  = A.get_field().characteristic();
+	bigint pn = A.get_field().number_of_elements();
 
 	if ((d & 1) || (!(d&1) && ((p.least_significant_digit() & 3) == 3)))
 		if (probabilistic_correctness_proof(pn+1)) {
@@ -723,7 +714,7 @@ bool eco_prime
 ::check_j_0_1728 (bigint & res)
 
 {
-	bigint pn = number_of_elements(A);
+	unsigned int d = A.absolute_degree();
 
 	bigint qp1(pn+1);
 	bigint x, y, cc;
@@ -731,7 +722,7 @@ bool eco_prime
 
 	P = E_.random_point();
 
-	if (cornacchia(x, y, -3, pn)) {
+	if (cornacchia_prime_power(x, y, -3, p, d)) {
 		multiply(Q, qp1+x, P);
 		if (Q.is_zero())
 			if (probabilistic_correctness_proof(qp1 + x)) {
@@ -780,7 +771,7 @@ bool eco_prime
 			}
 	}
 
-	if (cornacchia(x, y, -4, pn)) {
+	if (cornacchia_prime_power(x, y, -4, p, d)) {
 		multiply(Q, qp1+x, P);
 		if (Q.is_zero())
 			if (probabilistic_correctness_proof(qp1 + x)) {
@@ -862,25 +853,24 @@ void eco_prime::Ytop_f(ff_pol & res, const ff_polmod & f)
 {
   bigint pm1h;
   ff_pol    h;
-  ff_polmult H;
   lidia_size_t i, n;
   
   shift_right (pm1h, eco_prime::pn, 1); // pm1h = (q-1)/2
 
   // H = h = X^3 + AX + B
   
-  CurveEqn(h, eco_prime::p, A, B, f);
-  H.build (h, f); // poly_multiplier for faster arithmetic
+  CurveEqn(h, A, B, f);
+  // H.build (h, f); // poly_multiplier for faster arithmetic
 
   // compute res = H^((q-1)/2), left to right exponentiation
   
   n = pm1h.bit_length();
-  res.assign_one();
+  res.assign_one(A.get_field());
 
   for (i = n - 1; i >= 0; i--) {
     square (res, res, f);
     if (pm1h.bit(i))
-      multiply (res, res, H, f);
+      multiply (res, res, h, f);
   }
 }
 
@@ -891,19 +881,13 @@ void eco_prime::Ytop_f(ff_pol & res, const ff_polmod & f)
 // input modulus (used in Elkies or Schoof algorithm) as
 // polynomial.
 
-void eco_prime::CurveEqn (ff_pol & pol, const bigint & p,
-			  const ff_element & a, const ff_element & b,
-			  const ff_polmod & f)
+void eco_prime::CurveEqn (ff_pol & pol, const ff_element & a,
+			  const ff_element & b, const ff_polmod & f)
 {
-	ff_element tmp;
-
-	pol.set_modulus(p);
-	pol.assign_zero();
+	pol.assign_zero(A.get_field());
 	pol.set_coefficient(3);
-	tmp.assign(a);
-	pol.set_coefficient(tmp.mantissa(), 1);
-	tmp.assign(b);
-	pol.set_coefficient(tmp.mantissa(), 0);
+	pol.set_coefficient(a, 1);
+	pol.set_coefficient(b, 0);
 
 	if (f.modulus().degree() <= 3)
 		remainder (pol, pol, f);
@@ -920,30 +904,29 @@ void eco_prime::CurveEqn (ff_pol & pol, const bigint & p,
 int eco_prime::extract_sqrt(point< gf_element > * & res,
                             const point< gf_element > & P)
 {
-	base_vector< bigint > root_vector;
+	base_vector< gf_element > root_vector;
 	point< gf_element > Q(P), H(P);
 	ff_element h;
 	int i, j;
 
-	meq_pol.set_modulus(p);
-	meq_pol.assign_zero();
+	meq_pol.assign_zero(A.get_field());
 	meq_pol.set_coefficient(4);
 
-	multiply(h, ff_element(-4), P.get_x().polynomial_rep().const_term());
-	meq_pol.set_coefficient(h.mantissa(), 3);
+	multiply(h, ff_element(-4), P.get_x());
+	meq_pol.set_coefficient(h, 3);
 
 	multiply(h, ff_element(-2), A);
-	meq_pol.set_coefficient(h.mantissa(), 2);
+	meq_pol.set_coefficient(h, 2);
 
-	multiply(h, A, P.get_x().polynomial_rep().const_term());
+	multiply(h, A, P.get_x());
 	multiply(h, h, ff_element(4));
 	add(h, h, ff_element(8) * B);
 	negate(h, h);
-	meq_pol.set_coefficient(h.mantissa(), 1);
+	meq_pol.set_coefficient(h, 1);
 
 	square(h, A);
-	subtract(h, h, ff_element(4)* B * P.get_x().polynomial_rep().const_term());
-	meq_pol.set_coefficient(h.mantissa(), 0);
+	subtract(h, h, ff_element(4)* B * P.get_x());
+	meq_pol.set_coefficient(h, 0);
 
 	root_vector = find_roots(meq_pol);
 
@@ -951,8 +934,8 @@ int eco_prime::extract_sqrt(point< gf_element > * & res,
 		return 0;
 
 
-	gf_element hx(E_.get_a4().get_field());
-	gf_element hy(E_.get_a4().get_field());
+	gf_element hx(A.get_field());
+	gf_element hy(A.get_field());
 
 	j = 0;
 
@@ -961,11 +944,11 @@ int eco_prime::extract_sqrt(point< gf_element > * & res,
 		add(h, h, A);
 		multiply(h, h, root_vector[i]);
 		add(h, h, B);
-		if (is_square(h)) {
+		if (h.is_square()) {
 			h = sqrt(h);
 
 			hx.assign(root_vector[i]);
-			hy.assign(h.mantissa());
+			hy.assign(h);
 			H.assign(hx, hy);
 
 			multiply_by_2(Q, H);
@@ -1011,17 +994,14 @@ void eco_prime::compute_mod_2_power()
 {
 	ff_pol res, f_x;
 
-	// f_x = x mod p
-	f_x.set_modulus(p);
-	f_x.assign_zero();
-	f_x.set_coefficient(1);
+	// f_x = x
+	f_x.assign_x(A.get_field());
 
 	// meq_pol = X^3 + aX + b mod p
-	meq_pol.set_modulus(p);
-	meq_pol.assign_zero();
+	meq_pol.assign_zero(A.get_field());
 	meq_pol.set_coefficient(3);
-	meq_pol.set_coefficient(A.mantissa(), 1);
-	meq_pol.set_coefficient(B.mantissa(), 0);
+	meq_pol.set_coefficient(A, 1);
+	meq_pol.set_coefficient(B, 0);
 
 	// poly_modulus for meq_pol
 
@@ -1031,7 +1011,7 @@ void eco_prime::compute_mod_2_power()
 	power_x(res, pn, meq_pol_mod);
 	res = gcd(res-f_x, meq_pol);
 
-	// no root in Fp, no 2-torsion point in E(Fp)
+	// no root in Fq, no 2-torsion point in E(Fp)
 	if (res.is_one()) {
 		l = 2;
 		c[0] = 1;
@@ -1050,10 +1030,8 @@ void eco_prime::compute_mod_2_power()
 
 		// P.assign(find_root(res), ff_element(0));
 		//
-		gf_element hx(E_.get_a4().get_field());
-		gf_element hy(E_.get_a4().get_field());
+		gf_element hx, hy; // should automatically assign field
 		hx.assign(find_root(res));
-		hy.assign_zero();
 		P.assign(hx, hy);
 
 		while (extract_sqrt(T, P) > 0) {
@@ -1073,21 +1051,19 @@ void eco_prime::compute_mod_2_power()
 		//elliptic_curve< ff_element > e(A, B);
 		point< gf_element > P1(E_), P2(E_), P3(E_);
 
-		base_vector< bigint > roots = find_roots(res);
+		base_vector< gf_element > roots = find_roots(res);
 
-		gf_element hx(E_.get_a4().get_field());
-		gf_element hy(E_.get_a4().get_field());
+		gf_element hx(A.get_field());
+		gf_element hy(A.get_field());
 
 		// P1.assign(roots[0], ff_element(0));
 		//
 		hx.assign(roots[0]);
-		hy.assign_zero();
 		P1.assign(hx, hy);
 
 		// P2.assign(roots[1], ff_element(0));
 		//
 		hx.assign(roots[1]);
-		hy.assign_zero();
 		P2.assign(hx, hy);
 
 		// P3 = P1 + P2

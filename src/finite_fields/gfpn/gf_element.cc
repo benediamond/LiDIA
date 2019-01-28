@@ -49,8 +49,6 @@ namespace LiDIA {
 //*			class gf_element				*
 //***********************************************************************
 
-
-galois_field gf_element::uninitialized_field;
 unsigned int gf_element::output_format = 0;
 
 
@@ -59,7 +57,7 @@ unsigned int gf_element::output_format = 0;
 //
 
 gf_element::gf_element ()
-	: ff(uninitialized_field),
+	: ff(uninitialized_field()),
 	  rep(0)
 {
 	galois_field_rep const* R = get_ff_rep();
@@ -89,7 +87,15 @@ gf_element::gf_element (const galois_field& K)
 	CALL(R, construct) (*this);
 }
 
+gf_element::gf_element(const bigint &i)
+	: ff(uninitialized_field()),
+		rep(0)
+{
+	galois_field_rep const *R = get_ff_rep();
+	CALL(R, construct)(*this);
 
+	assign(i);
+}
 
 gf_element::~gf_element()
 {
@@ -102,6 +108,10 @@ gf_element::~gf_element()
 //
 // access functions
 //
+
+static bool inline is_undefined(const galois_field &K) {
+	return K.degree() == 0;
+}
 
 const galois_field &
 gf_element::get_field () const
@@ -249,6 +259,7 @@ gf_element::assign (const bigint& a)
 }
 
 
+void gf_element::assign(const int &a) { assign(bigint(a)); }
 
 gf_element&
 gf_element::operator = (const gf_element& a)
@@ -1539,7 +1550,7 @@ gf_element::return_as_bigint() const
 		return( 0 );
 	}	
 
-    if (ff == uninitialized_field)
+    if (is_undefined(ff))
     {
 		std::cerr << "The field is not initialized."
 				  << std::endl;
@@ -1563,7 +1574,7 @@ gf_element::output (std::ostream & out) const
 {
 	out << "(";
 
-	if (ff == uninitialized_field) {
+	if (is_undefined(ff)) {
 		if (output_format == SHORT_OUTPUT)
 			out << "0";
 		else
@@ -1793,12 +1804,12 @@ gf_element::input (std::istream & in)
 	}
 	if (short_input) {
 		// make sure that ff is initialized
-		if (ff.degree() == 0)
+		if (is_undefined(ff))
 			lidia_error_handler("gf_element", "input: no field specified "
 					    "while reading short input format");
 	}
 	else {
-		if ((ff == uninitialized_field) ? 1 : (pol_Fp != ff.irred_polynomial())) {
+		if ((is_undefined(ff)) ? 1 : (pol_Fp != ff.irred_polynomial())) {
 			// need to assign a new field
 			galois_field K(pol_Fp);
 			set_field(K);

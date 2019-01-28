@@ -341,6 +341,7 @@ void edf(factorization< gf_polynomial > &factors, const Fp_poly_modulus& F, cons
 // b = X^p mod f.
 // d = degree of irreducible factors of f
 
+factorization<gf_polynomial> edf(const gf_polynomial &f, lidia_size_t d);
 
 void square_free_decomp(factorization< gf_polynomial > &u, const gf_polynomial& f);
 void berlekamp(factorization< gf_polynomial > &F, const gf_polynomial& f);

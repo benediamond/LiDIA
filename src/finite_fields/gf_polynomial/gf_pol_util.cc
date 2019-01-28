@@ -19,10 +19,10 @@
 #ifdef HAVE_CONFIG_H
 # include	"config.h"
 #endif
-#include	"LiDIA/gf_polynomial.h"
-#include	"LiDIA/finite_fields/Fp_polynomial_fft.h"
-
-
+#include "LiDIA/gf_polynomial.h"
+#include "LiDIA/finite_fields/Fp_polynomial_fft.h" // why?
+#include "LiDIA/finite_fields/Fp_polynomial_util.h"
+#include "LiDIA/factorization.h"
 
 #ifdef LIDIA_NAMESPACE
 namespace LiDIA {
@@ -85,7 +85,7 @@ find_roots(base_vector< gf_element > &x, const gf_polynomial & f)
 {
 // f is monic, and has deg(f) distinct roots.
 // returns the list of roots
-	debug_handler("factoring.c", "find_roots(base_vector< gf_element > &, gf_polynomial&)");
+	debug_handler("gf_pol_util.cc", "find_roots(base_vector< gf_element > &, gf_polynomial&)");
 
 	if (f.degree() == 0)
 		return;
@@ -143,21 +143,51 @@ find_roots(base_vector< gf_element > &x, const gf_polynomial & f)
 }
 
 
+//
+// Task:	Returns the list of roots of f (without multiplicities)
+//
+// Conditions:	always: f mustn't be the zero polynomial
+//		if (flag == 0): no assumptions [default]
+//		if (flag != 0): f monic with deg(f) distinct roots.
+//
 
-base_vector< gf_element > find_roots(const gf_polynomial &f)
+base_vector<gf_element> find_roots(const gf_polynomial &f, int flag)
 {
 	base_vector< gf_element > v;
-	find_roots(v, f);
-	lidia_size_t i;
-	gf_polynomial h, g;
-	h.assign_x(f.get_field());
-	g.assign_one(f.get_field());
-	for (i = 0; i < v.size(); i++) {
-		h[0] = -v[i];
-		multiply(g, g, h);
+	if (flag != 0) { // this is what berl and can-zass call. the original code
+		find_roots(v, f);
+		lidia_size_t i;
+		gf_polynomial h, g;
+		h.assign_x(f.get_field());
+		g.assign_one(f.get_field());
+		for (i = 0; i < v.size(); i++) {
+			h[0] = -v[i];
+			multiply(g, g, h);
+		}
+		if (g != f)
+			std::cout << "Mist." << v << std::endl << f << std::endl << g << std::endl;
+	} else { // adapted from factoring.cc
+		polynomial<gf_element> x_to_the_q, x;
+		polynomial<gf_element> g(f);
+		divide(g, g, g.lead_coeff()); // g.make_monic();
+
+		x.assign_x(g.get_field());
+		gf_poly_modulus F(g);
+
+		// this is the costly step we want to avoid if flag != 0
+		power_x(x_to_the_q, g.get_field().number_of_elements(), F);
+
+		gcd(g, g, x_to_the_q - x); // split off linear factors
+
+		factorization<polynomial<gf_element> > sqfr;
+		square_free_decomp(sqfr, g); // decompose acc. to multiplicities
+
+		// any component of sqfr is a product
+		// of distinct linear factors
+		lidia_size_t i;
+		for (i = 0; i < sqfr.no_of_composite_components(); i++)
+			find_roots(v, sqfr.composite_base(i).base());
 	}
-	if (g != f)
-		std::cout << "Mist." << v << std::endl << f << std::endl << g << std::endl;
 	return v;
 }
 
@@ -219,7 +249,7 @@ void compose3(gf_polynomial& x1, gf_polynomial& x2, gf_polynomial& x3,
 	A.build(h, F, m);
 	A.compose(x1, g1, F);
 	A.compose(x2, g2, F);
-	A.compose(x3, g2, F);
+	A.compose(x3, g3, F);
 }
 
 
@@ -273,18 +303,32 @@ trace_map(gf_polynomial & w, const gf_polynomial & a, lidia_size_t d,
 }
 
 
+void inner_product(gf_element& x, const base_vector< gf_element > & a,
+		   const gf_polynomial &b, lidia_size_t offset)
+{
+	debug_handler("gf_pol_util.cc", "inner_product(gf_element&, base_vector< gf_element > &, gf_polynomial&, lidia_size_t)");
 
-#if 0
+	lidia_size_t n = comparator<lidia_size_t>::min(a.size(), b.degree() + 1 + offset);
+	lidia_size_t i;
+	gf_element accum, t;
 
-void
-power_compose(gf_polynomial & y, const gf_polynomial & h, lidia_size_t q, const gf_polynomial & f)
+	for (i = offset; i < n; i++) {
+		multiply(t, a[i], b[i - offset]);
+		add(accum, accum, t);
+	}
+	x.assign(accum); // remainder(x, accum, b.modulus());
+}
+
+void power_compose(gf_polynomial &y, const gf_polynomial &h, lidia_size_t q,
+                   const gf_poly_modulus &F) {
 	// w = X^{q^d} mod f;
 	// it is assumed that d >= 0, and b = X^q mod f, q a power of p
-{
-	debug_handler("gf_polynomial", "power_compose(gf_polynomial&, gf_polynomial&, lidia_size_t, gf_polynomial&)");
+	debug_handler("gf_polynomial",
+                "power_compose(gf_polynomial&, gf_polynomial&, lidia_size_t, "
+                "gf_polynomial&)");
 
-	y.ffield = (gf_polynomial::common_field(h.ffield, f.ffield));
-	gf_polynomial::build_frame(y.ffield);
+	// common_field(h.ffield, f.ffield)
+	// gf_polynomial::build_frame(y.ffield);
 
 	gf_polynomial z(h);
 	lidia_size_t sw;
@@ -322,11 +366,207 @@ power_compose(gf_polynomial & y, const gf_polynomial & h, lidia_size_t q, const 
 
 		q = q >> 1;
 	}
-
-	gf_polynomial::delete_frame();
 }
 
-#endif
+static void tandem_power_compose(gf_polynomial &y1, gf_polynomial &y2,
+                                 const gf_polynomial &h, lidia_size_t q1,
+                                 lidia_size_t q2, const gf_poly_modulus &F) {
+    debug_handler(
+        "gf_pol_util.cc",
+        "tandem_power_compose(gf_polynomial&, gf_polynomial&, gf_polynomial& "
+        "h, lidia_size_t, lidia_size_t, gf_poly_modulus&)");
+
+    y1.assign_x(h.get_field());
+    y2.assign_x(h.get_field());
+    // gf_polynomial::build_frame(ffield);
+
+    gf_polynomial z(h);
+    lidia_size_t sw;
+
+    while (q1 || q2) {
+        sw = 0;
+
+        if (q1 > 1 || q2 > 1)
+            sw = 4;
+
+        if (q1 & 1) {
+            if (y1.is_x())
+                y1.assign(z);
+            else
+                sw = sw | 2;
+        }
+
+        if (q2 & 1) {
+            if (y2.is_x())
+                y2.assign(z);
+            else
+                sw = sw | 1;
+        }
+
+        switch (sw) {
+        case 0:
+            break;
+
+        case 1:
+            compose(y2, y2, z, F);
+            break;
+
+        case 2:
+            compose(y1, y1, z, F);
+            break;
+
+        case 3:
+            compose2(y1, y2, y1, y2, z, F);
+            break;
+
+        case 4:
+            compose(z, z, z, F);
+            break;
+
+        case 5:
+            compose2(z, y2, z, y2, z, F);
+            break;
+
+        case 6:
+            compose2(z, y1, z, y1, z, F);
+            break;
+
+        case 7:
+            compose3(z, y1, y2, z, y1, y2, z, F);
+            break;
+        }
+
+        q1 = q1 >> 1;
+        q2 = q2 >> 1;
+    }
+
+    // gf_polynomial::delete_frame();
+}
+
+//***********************************************************************
+//
+//  Algorithms which are useful in counting points on elliptic curves:
+//		compute_degree, prob_compute_degree
+//
+//***********************************************************************
+
+static lidia_size_t base_case(const gf_polynomial &h, lidia_size_t q, int a,
+                              const gf_poly_modulus &F) {
+    debug_handler(
+        "gf_pol_util.cc",
+        "base_case(gf_polynomial&, lidia_size_t, int, gf_poly_modulus&)");
+
+    lidia_size_t b;
+    gf_polynomial lh(h);
+    // lh.set_max_degree(F.modulus().degree() - 1);
+
+    b = 0;
+    while (b < a - 1 && !lh.is_x()) {
+        b++; // no binary search? see Shoup, Frobenius, 1992, p. 23
+        power_compose(lh, lh, q, F);
+    }
+
+    if (!lh.is_x())
+        b++;
+
+    return b;
+}
+
+static int compute_split(int lo, int hi, const fac_vec &fvec) {
+    // duplicated code, but is it worth bothering trying to set up an import?
+    debug_handler("gf_pol_util.cc", "compute_split(int, int, fac_vec&)");
+
+    int mid, i;
+    double total, sum;
+
+    total = 0;
+    for (i = lo; i <= hi; i++)
+        total = total + fvec[i].len;
+
+    mid = lo - 1;
+    sum = 0;
+    while (sum < total / 2) {
+        mid++;
+        sum = sum + fvec[mid].len;
+    }
+
+    if (mid == hi || (mid != lo && 2 * sum > total + fvec[mid].len))
+        mid--;
+
+    return mid;
+}
+
+static void rec_compute_degree(int lo, int hi, const gf_polynomial &h,
+                               const gf_poly_modulus &F, fac_vec &fvec) {
+    debug_handler("gf_pol_util.cc",
+                  "rec_compute_degree(int, int, gf_polynomial&, "
+                  "gf_poly_modulus&, fac_vec&)");
+
+    int mid;
+    lidia_size_t q1, q2;
+    gf_polynomial h1, h2;
+
+    if (h.is_x()) {
+        fvec.clear(lo, hi);
+        return;
+    }
+
+    if (lo == hi) {
+        fvec[lo].b = base_case(h, fvec[lo].q, fvec[lo].a, F);
+        return;
+    }
+
+    mid = compute_split(lo, hi, fvec);
+
+    q1 = fvec.prod(lo, mid);
+    q2 = fvec.prod(mid + 1, hi);
+
+    tandem_power_compose(h1, h2, h, q1, q2, F);
+    rec_compute_degree(lo, mid, h2, F, fvec);
+    rec_compute_degree(mid + 1, hi, h1, F, fvec);
+}
+
+//
+// Task:	The common degree of the irreducible factors of f is computed.
+//		This routine is useful in counting points on elliptic curves.
+//
+// Conditions:	f = F.modulus() is assumed to be an "equal degree" polynomial,
+//		h = x^p mod f,
+//              d is multiple of common degree, if d == -1, such information
+//              not known
+//
+
+lidia_size_t compute_degree(const gf_polynomial &h, const gf_poly_modulus &F,
+                            lidia_size_t d) {
+    debug_handler("gf_pol_util.cc",
+                  "compute_degree(gf_polynomial&, gf_poly_modulus&)");
+
+    // h.comp_modulus(F.modulus(), "compute_degree");
+
+    if (h.is_x())
+        return 1;
+
+    lidia_size_t res;
+
+    if (d == -1)
+        d = F.modulus().degree();
+
+    fac_vec fvec(d);
+
+    int i, NumFactors = fvec.number_of_factors();
+
+    rec_compute_degree(0, NumFactors - 1, h, F, fvec);
+
+    res = 1;
+
+    for (i = 0; i < NumFactors; i++) {
+        res = res * static_cast<lidia_size_t>(
+                        power(static_cast<udigit>(fvec[i].q),
+                              static_cast<unsigned int>(fvec[i].b)));
+    }
+
+    return res;
+}
 
 
 

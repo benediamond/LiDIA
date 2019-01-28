@@ -53,7 +53,6 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
   lidia_size_t   k, d;
   lidia_size_t   top;
   lidia_size_t   k_ix;
-  ff_element   tmp;
   PsiPowers  *psi_pow; // for storing division polynomials
   ff_pol  sqrYY; // y^4 = (x^3+ax+b)^2
   ff_polmod ffC; // build ff_polmod for Elkies polynomial
@@ -62,9 +61,7 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
   ff_element inv2;
   
   ffC.build (fC);
-  Q1.set_modulus(p);
-  Q2.set_modulus(p);
-  Mone.set_modulus(p); Mone.set_coefficient(-1, 0);
+  Mone.assign_zero(A.get_field()); Mone.set_coefficient(-1, 0);
   
 #ifdef TIMING
   timer t;
@@ -85,8 +82,7 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
   
   // determine sqrYY = Y^4 = (X^3 + A*X + B)^2
   
-  sqrYY.set_modulus(p);
-  CurveEqn (sqrYY, p, A, B, ffC);
+  CurveEqn (sqrYY, A, B, ffC);
   square   (sqrYY, sqrYY, ffC);
   
   //******************************* Test Y coordinate ****************
@@ -94,9 +90,6 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
   if (test_y_coordinate()) {
     ff_pol  ytop; // 4 * y^(q-1) = 4 * (x^3+ax+b)^((q-1)/2)
     ff_pol  ytop1; // 4 * y^(q-1) * y^4 = 4 * (x^3+ax+b)^((q+3)/2)
-    
-    ytop.set_modulus(p);
-    ytop1.set_modulus(p);
     
 #ifdef TIMING
     t.start_timer();
@@ -152,8 +145,7 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
     if (d > 1 && (alpha_num == 1 || test_all)) {
       // determine 4 * Y^(q-1) =  ytop
       
-      tmp = 4;
-      multiply (ytop, ytop, tmp.mantissa());
+      multiply (ytop, bigint(4), ytop);
       
       // determine ytop1 = 4 * Y^4 * Y^(q-1)
       
@@ -320,9 +312,6 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
     ff_pol right_side; // y^2 = x^3 + A*x + B
     ff_pol tmp_pol;
     
-    xtop.set_modulus(p);
-    tmp_pol.set_modulus(p);
-    
 #ifdef TIMING
 		t.start_timer();
 #endif
@@ -335,8 +324,7 @@ bool eco_prime::schoofpart (lidia_size_t & ev, const ff_pol & fC,
 			std::cout << "\nComputation of X^q mod f_C(X) needs time : " << t << "\n" << std::flush;
 #endif
 
-		right_side.set_modulus(p);
-		CurveEqn (right_side, p, A, B, ffC);
+		CurveEqn (right_side, A, B, ffC);
 
 		if (info) {
 			std::cout << "\nTesting X-coordinate of " << klist[0];
@@ -499,7 +487,6 @@ bool eco_prime::schoofpart_rat_function (lidia_size_t & ev,
 	lidia_size_t   k, d;
 	lidia_size_t   k_ix;
 	ff_element   inv2;
-	ff_element   tmp;
 	ff_pol  ytop; // 4 * y^(q-1) = 4 * (x^3+ax+b)^((q-1)/2) for y-test
 	//  X^q for x-test
 	ff_polmod ffC;
@@ -514,8 +501,6 @@ bool eco_prime::schoofpart_rat_function (lidia_size_t & ev,
 #endif
 
 	ffC.build (fC); // first build ff_polmod
-
-	ytop.set_modulus(p); // compute yq
 
 #ifdef TIMING
 	t.start_timer();

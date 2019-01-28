@@ -27,6 +27,9 @@
 #ifndef LIDIA_BIGMOD_H_GUARD_
 # include	"LiDIA/bigmod.h"
 #endif
+#ifndef LIDIA_GF_ELEMENT_H_GUARD_
+#include "LiDIA/gf_element.h"
+#endif
 
 
 
@@ -535,6 +538,175 @@ operator /= (sparse_power_series< bigmod > & a,
 #endif	// NO_PSR_BIGMOD
 
 
+
+#ifndef NO_PSR_GF_ELEMENT
+
+//******************************************************************************
+//************* Specialization : sparse_power_series < gf_element > ************
+//******************************************************************************
+
+template <>
+class sparse_power_series<gf_element>
+    : public base_sparse_power_series<gf_element> {
+
+  protected:
+    //
+    // ***** protected member functions *****
+    //
+
+    void multiply(const sparse_power_series<gf_element> &a,
+                  const sparse_power_series<gf_element> &b);
+    void invert(const sparse_power_series<gf_element> &a);
+    void square(const sparse_power_series<gf_element> &a);
+    void power(const sparse_power_series<gf_element> &a, long n);
+    void divide(const sparse_power_series<gf_element> &a,
+                const sparse_power_series<gf_element> &b);
+    void divide(const gf_element &b, const sparse_power_series<gf_element> &a);
+
+  public:
+    //
+    // ****  constructor/destructor functions    ******
+    //
+
+    sparse_power_series();
+    sparse_power_series(const gf_element &a, lidia_size_t l);
+    sparse_power_series(const base_vector<gf_element> &a, lidia_size_t f);
+    sparse_power_series(const base_sparse_power_series<gf_element> &x);
+    ~sparse_power_series(){};
+
+    //
+    //  *****  assignment operator  *****
+    //
+
+    sparse_power_series<gf_element> &
+    operator=(const base_sparse_power_series<gf_element> &x);
+
+    //
+    // ***** arithmetical procedures *****
+    //
+
+    friend void multiply(sparse_power_series<gf_element> &res,
+                         const sparse_power_series<gf_element> &a,
+                         const sparse_power_series<gf_element> &b);
+
+    friend void invert(sparse_power_series<gf_element> &res,
+                       const sparse_power_series<gf_element> &a);
+
+    friend void square(sparse_power_series<gf_element> &res,
+                       const sparse_power_series<gf_element> &a);
+
+    friend void power(sparse_power_series<gf_element> &res,
+                      const sparse_power_series<gf_element> &a, long n);
+
+    friend void divide(sparse_power_series<gf_element> &res,
+                       const sparse_power_series<gf_element> &a,
+                       const sparse_power_series<gf_element> &b);
+
+    friend void divide(sparse_power_series<gf_element> &res,
+                       const gf_element &b,
+                       const sparse_power_series<gf_element> &a);
+
+    //
+    //  *****  arithmetical operators  *****
+    //
+
+    friend sparse_power_series<gf_element>
+    operator*(const sparse_power_series<gf_element> &a,
+              const sparse_power_series<gf_element> &b);
+
+    friend sparse_power_series<gf_element> &
+    operator*=(sparse_power_series<gf_element> &a,
+               const sparse_power_series<gf_element> &b);
+
+    friend sparse_power_series<gf_element>
+    operator/(const sparse_power_series<gf_element> &a,
+              const sparse_power_series<gf_element> &b);
+
+    friend sparse_power_series<gf_element>
+    operator/(const gf_element &a, const sparse_power_series<gf_element> &b);
+
+    friend sparse_power_series<gf_element> &
+    operator/=(sparse_power_series<gf_element> &a,
+               const sparse_power_series<gf_element> &b);
+};
+
+inline void multiply(sparse_power_series<gf_element> &res,
+                     const sparse_power_series<gf_element> &a,
+                     const sparse_power_series<gf_element> &b) {
+    res.multiply(a, b);
+}
+
+inline void invert(sparse_power_series<gf_element> &res,
+                   const sparse_power_series<gf_element> &a) {
+    res.invert(a);
+}
+
+inline void square(sparse_power_series<gf_element> &res,
+                   const sparse_power_series<gf_element> &a) {
+    res.square(a);
+}
+
+inline void power(sparse_power_series<gf_element> &res,
+                  const sparse_power_series<gf_element> &a, long n) {
+    res.power(a, n);
+}
+
+inline void divide(sparse_power_series<gf_element> &res,
+                   const sparse_power_series<gf_element> &a,
+                   const sparse_power_series<gf_element> &b) {
+    res.divide(a, b);
+}
+
+inline void divide(sparse_power_series<gf_element> &res, const gf_element &b,
+                   const sparse_power_series<gf_element> &a) {
+    res.divide(b, a);
+}
+
+//
+//  *****  arithmetical operators  *****
+//
+
+inline sparse_power_series<gf_element>
+operator*(const sparse_power_series<gf_element> &a,
+          const sparse_power_series<gf_element> &b) {
+    sparse_power_series<gf_element> c;
+
+    c.multiply(a, b);
+    return c;
+}
+
+inline sparse_power_series<gf_element> &
+operator*=(sparse_power_series<gf_element> &a,
+           const sparse_power_series<gf_element> &b) {
+    a.multiply(a, b);
+    return a;
+}
+
+inline sparse_power_series<gf_element>
+operator/(const sparse_power_series<gf_element> &a,
+          const sparse_power_series<gf_element> &b) {
+    sparse_power_series<gf_element> c;
+
+    c.divide(a, b);
+    return c;
+}
+
+inline sparse_power_series<gf_element>
+operator/(const gf_element &a, const sparse_power_series<gf_element> &b) {
+    sparse_power_series<gf_element> c;
+
+    c.divide(a, b);
+    return c;
+}
+
+inline sparse_power_series<gf_element> &
+operator/=(sparse_power_series<gf_element> &a,
+           const sparse_power_series<gf_element> &b) {
+    a.divide(a, b);
+    return a;
+}
+
+#endif // NO_PSR_GF_ELEMENT
 
 #ifdef LIDIA_NAMESPACE
 }	// end of namespace LiDIA

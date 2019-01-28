@@ -333,6 +333,14 @@ performed by the following functions:
   $d \assign \gcd(f, g) = s \cdot f + t \cdot g$.
 \end{fcode}
 
+\begin{fcode}{void}{resultant}{bigint & r, const Fp_polynomial & $f$, const Fp_polynomial & $g$}
+  sets $r$ to the resultant of two polynomials $f$ and $g$.
+\end{fcode}
+
+\begin{fcode}{bigint}{resultant}{const Fp_polynomial & $f$, const Fp_polynomial & $g$}
+  returns the resultant of two polynomials $f$ and $g$.
+\end{fcode}
+
 
 \STITLE{Modular Arithmetic without pre-conditioning}
 
@@ -476,7 +484,7 @@ Let $f$ be an instance of type \code{Fp_polynomial}.
 \begin{fcode}{base_vector< bigint >}{find_roots}{const Fp_polynomial & $f$,
     int $\mathit{flag}$ = 0}%
   returns the list of roots of $f$ (without multiplicities).  If $\mathit{flag} \neq 0$, $f$
-  must be monic and the product of $\deg(f)$ distinct roots; otherwise no assumptions on $f$ are
+  must be the product of $\deg(f)$ distinct roots; otherwise no assumptions on $f$ are
   made.
 \end{fcode}
 

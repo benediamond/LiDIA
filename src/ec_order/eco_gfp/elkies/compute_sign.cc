@@ -45,24 +45,18 @@ void eco_prime::sign_dewaghe (lidia_size_t & alpha,
 	if (alpha < 0)
 		alpha = l - alpha;
 
-	Fp_polynomial curve;
-	bigmod h;
+	ff_pol curve(A.get_field());
+	ff_element h;
 
-	curve.set_modulus(A.modulus());
 	curve.set_coefficient(3);
-	curve.set_coefficient(A.mantissa(), 1);
-	curve.set_coefficient(B.mantissa(), 0);
+	curve.set_coefficient(A, 1);
+	curve.set_coefficient(B, 0);
 
-	h = resultant(fC, curve);
+	resultant(h, fC, curve);
 
-	if (jacobi(h.mantissa(), pn) == 1) {
-		if (jacobi(static_cast<udigit>(alpha), static_cast<udigit>(l)) == -1)
-			alpha = -alpha;
+	if (h.is_square() != (jacobi(static_cast<udigit>(alpha), static_cast<udigit>(l)) == 1)) {
+		alpha = -alpha;
 	}
-	else
-		if (jacobi(static_cast<udigit>(alpha), static_cast<udigit>(l)) == 1)
-			alpha = -alpha;
-
 	if (alpha < 0)
 		alpha = l + alpha;
 }

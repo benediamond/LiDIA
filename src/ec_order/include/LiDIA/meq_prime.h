@@ -20,10 +20,8 @@
 #ifndef LIDIA_MEQ_PRIME_H_GUARD_
 #define LIDIA_MEQ_PRIME_H_GUARD_
 
-
-
-#ifndef LIDIA_FP_POLYNOMIAL_H_GUARD_
-# include	"LiDIA/Fp_polynomial.h"
+#ifndef LIDIA_GF_ELEMENT_H_GUARD_
+#include "LiDIA/gf_element.h"
 #endif
 #ifndef LIDIA_UDIGIT_H_GUARD_
 # include	"LiDIA/udigit.h"
@@ -138,8 +136,8 @@ public:
 	int read_row ();
 	int read_row (const bigint & p);
 
-	void build_poly_in_X (Fp_polynomial & p, const bigmod & y);
-	void build_poly_in_Y (Fp_polynomial & p, const bigmod & x);
+	void build_poly_in_X (polynomial< gf_element > & p, const gf_element & y);
+	void build_poly_in_Y (polynomial< gf_element > & p, const gf_element & x);
 };
 
 

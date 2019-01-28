@@ -41,7 +41,7 @@ namespace LiDIA {
 
 
 void eco_prime::
-mult_matrix(base_vector< bigint > & v, const ff_pol & aa,
+mult_matrix(base_vector< gf_element > & v, const ff_pol & aa,
 	    const ff_polmod & F)
 {
 	int i, d;
@@ -61,7 +61,7 @@ mult_matrix(base_vector< bigint > & v, const ff_pol & aa,
 //******************************************************************
 // This functions implements the fast search from the paper
 // Vmueller and Mmaurer: "Fast ev search". The function inner_product
-// is already available in Fp_polynomial.
+// is already available in gf_polynomial.
 
 
 int eco_prime::search_in_table(const ff_rat & f,
@@ -69,9 +69,8 @@ int eco_prime::search_in_table(const ff_rat & f,
 			       int size)
 {
 	int d = F.modulus().degree();
-	base_vector< bigint > v1(d, d), v2(d, d);
-	bigint r1, r2;
-	ff_element res1, res2;
+	base_vector< gf_element > v1(d, d), v2(d, d);
+	ff_element r1, r2;
 
 	mult_matrix(v1, f.numerator(), F);
 	mult_matrix(v2, f.denominator(), F);
@@ -80,20 +79,18 @@ int eco_prime::search_in_table(const ff_rat & f,
 		inner_product(r1, v1, table[i].denominator());
 		inner_product(r2, v2, table[i].numerator());
 
-		res1.assign(r1);
-		res2.assign(r2);
 
 #ifdef DEBUG
 		if (equal(f, table[i], F)) {
 			std::cout << "\nDEBUG: found match for i = " << i << std::flush;
-			if (res1 == res2)
+			if (r1 == r2)
 				std::cout << " --> Test also " << std::flush;
 			else
 				std::cout << "\n --> Test NOT " << std::flush;
 		}
 #endif
 
-		if (res1 == res2) {
+		if (r1 == r2) {
 			// pseudo_match found
 			if (equal(f, table[i], F))
 				return i;
@@ -123,7 +120,7 @@ bool eco_prime::schoofpart_BG (lidia_size_t & ev, const ff_pol & fC,
 
 	lidia_size_t   i, j, d;
 	lidia_size_t   number_BG;
-	ff_pol  xp, yp; // Y^(q-1) = (X^3+aX+b)^((q-1)/2)  and  X^q mod fC
+	ff_pol  xq, yp; // Y^(q-1) = (X^3+aX+b)^((q-1)/2)  and  X^q mod fC
 	ff_polmod ffC;
 
 	ffC.build (fC);
@@ -150,16 +147,13 @@ bool eco_prime::schoofpart_BG (lidia_size_t & ev, const ff_pol & fC,
 		}
 	}
 
-	xp.set_modulus(pn);
-	yp.set_modulus(pn);
-
 #ifdef TIMING
 	timer t;
 	t.set_print_mode();
 	t.start_timer();
 #endif
 
-	power_x (xp, pn, ffC); // compute frob(P) = (X, Y)^p
+	power_x (xq, pn, ffC); // compute frob(P) = (X, Y)^p
 	Ytop_f (yp, ffC);
 
 #ifdef TIMING
@@ -168,7 +162,7 @@ bool eco_prime::schoofpart_BG (lidia_size_t & ev, const ff_pol & fC,
 		std::cout << "\nComputation of Phi(X, Y) needs time : " << t << std::flush;
 #endif
 
-	if (xp.is_x()) {
+	if (xq.is_x()) {
 		// match for k = +/- 1.
 		if (yp.is_one()) {
 			ev = 1;
@@ -191,7 +185,7 @@ bool eco_prime::schoofpart_BG (lidia_size_t & ev, const ff_pol & fC,
 	wep_rat_function P, frob_P, kP;
 	ff_rat *table;
 
-	frob_P.assign(xp, yp);
+	frob_P.assign(xq, yp);
 
 #ifdef DEBUG
 	wep_rat_function frob(frob_P), H;
@@ -349,9 +343,9 @@ void eco_prime::double_point_x_only(ff_rat & x3, const ff_rat & x1,
 	ff_pol x(x1.numerator()), z(x1.denominator());
 	ff_pol x2, z2, xz, n, d;
 
-	x2.set_modulus(A.modulus());
-	z2.set_modulus(x2); xz.set_modulus(x2); n.set_modulus(x2);
-	d.set_modulus(x2);
+	x2.assign_zero(A.get_field());
+	z2.assign_zero(A.get_field()); xz.assign_zero(A.get_field()); n.assign_zero(A.get_field());
+	d.assign_zero(A.get_field());
 
 	n.assign_zero(); d.assign_zero();
 
@@ -359,19 +353,19 @@ void eco_prime::double_point_x_only(ff_rat & x3, const ff_rat & x1,
 	square(z2, z, F);
 	multiply(xz, x, z, F);
 
-	add(d, x2, A.mantissa()*z2);
+	add(d, x2, A*z2);
 	multiply(d, d, xz, F);
 
-	add(n, (-2 * A.mantissa())*xz, (-8 * B.mantissa()) * z2);
+	add(n, (-2 * A)*xz, (-8 * B) * z2);
 	multiply(n, n, xz, F);
 
 	square(x2, x2, F);
 	square(z2, z2, F);
 
-	add(d, d, B.mantissa()* z2);
-	multiply_by_scalar(d, d, 4);
+	add(d, d, B* z2);
+	multiply(d, bigint(4), d);
 	add(n, n, x2);
-	add(n, n, (A*A).mantissa() * z2);
+	add(n, n, (A*A) * z2);
 	x3.assign(n, d);
 }
 
@@ -452,8 +446,7 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 	lidia_size_t   i, j;
 	lidia_size_t   number_baby, number_giant;
 	double average;
-	ff_pol  xp_pol; // X^q mod fC
-	ff_rat  xp; // and as rational function
+	ff_pol xq_pol; // X^q mod fC
 	ff_polmod ffC;
 
 	if (l < lower_bound_for_FBG) {
@@ -485,15 +478,13 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 		}
 	}
 
-	xp_pol.set_modulus(pn);
-
 #ifdef TIMING
 	timer t;
 	t.set_print_mode();
 	t.start_timer();
 #endif
 
-	power_x (xp_pol, pn, ffC);
+	power_x (xq_pol, pn, ffC);
 
 #ifdef TIMING
 	t.stop_timer();
@@ -501,10 +492,9 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 		std::cout << "\nComputing X^q mod f_C(X) needs time : " << t << std::flush;
 #endif
 
-	xp.set_modulus(pn);
-	xp.assign(xp_pol);
+	ff_rat xq(xq_pol);
 
-	if (xp_pol.is_x()) {
+	if (xq_pol.is_x()) {
 		// match for k = +/- 1.
 		ev = 1;
 		if (info)
@@ -519,9 +509,7 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 	ff_element inv2;
 	int top, deleted = -1, kk;
 
-	sqrYY.set_modulus(p);
-	right_side.set_modulus(p);
-	CurveEqn (right_side, p, A, B, ffC);
+	CurveEqn (right_side, A, B, ffC);
 	square   (sqrYY, right_side, ffC);
 	invert (inv2, ff_element(2));
 
@@ -536,16 +524,12 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 
 		while (deleted <= kk) {
 			deleted ++;
-			psi_pow[deleted].pow3->kill();
+			psi_pow[deleted].pow3->assign_zero();
 		}
 	}
 
 	// now I'm testing first whether (X^q, .) = alpha *(X, Y) with
 	// alpha even, 2 <= alpha <= number_giant
-
-	num.set_modulus(p);
-	den.set_modulus(p);
-	help.set_modulus(p);
 
 	for (i = 2; i <= number_giant; i += 2) {
 		multiply(den, *(psi_pow[i].pow2), right_side, ffC);
@@ -553,7 +537,7 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 		multiply(help, *(psi_pow[i-1].pow1), *(psi_pow[i+1].pow1), ffC);
 		subtract(num, num, help);
 
-		if (equal(xp, ff_rat(num, den), ffC)) {
+		if (equal(xq, ff_rat(num, den), ffC)) {
 			ev = i;
 			if (info)
 				std::cout << "\n\nEigenvalue of Frobenius is +/- " << ev << std::flush;
@@ -566,11 +550,11 @@ bool eco_prime::schoofpart_FBG (lidia_size_t & ev, const ff_pol & fC,
 	// table[i] = x-coord(2^j * (X^q, .))
 	
 	table = new ff_rat [number_baby+1];
-	table[0].assign(xp);
+	table[0].assign(xq);
 
 	for (i = 1; i <= number_baby; i++) {
-		double_point_x_only(xp, xp, ffC);
-		table[i].assign(xp);
+		double_point_x_only(xq, xq, ffC);
+		table[i].assign(xq);
 		if (info)
 			std::cout << "B " << std::flush;
 	}

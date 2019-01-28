@@ -36,7 +36,7 @@ using namespace LiDIA;
 int main_LiDIA(int argc, char** argv)
 {
 	bigint p;
-	int info;
+	int info, k;
 
 	//
 	// Read characteristic and curve parameters
@@ -48,12 +48,14 @@ int main_LiDIA(int argc, char** argv)
 
 	std::cout << "\nCharacteristic : ";
 	std::cin >> p;
+	std::cout << "\nDegree of field extension : ";
+	std::cin >> k;
 	p = next_prime(p-1);
 	std::cout << "\nChoose next prime, p = "<< p;
 	std::cout << " (" << decimal_length(p) << ")" << std::flush;
 
 	bigmod::set_modulus(p);
-	galois_field theField(p);
+	galois_field theField(p, k);
 
 	gf_element a4(theField), a6(theField);
 

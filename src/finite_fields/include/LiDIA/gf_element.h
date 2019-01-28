@@ -61,7 +61,10 @@ class gf_element
 	// in a Polynomial Base of a Galois field
 	//
 
-	static galois_field uninitialized_field;
+	static galois_field &uninitialized_field() {
+		static galois_field *ans = new galois_field();
+		return *ans;
+	} // https://isocpp.org/wiki/faq/ctors#static-init-order-on-first-use
 	static unsigned int output_format;
 	enum {
 		SHORT_OUTPUT = 0,
@@ -90,6 +93,7 @@ public:
 	gf_element();
 	gf_element(const gf_element&);
 	gf_element(const galois_field&);
+	gf_element(const bigint &);
 	//gf_element(const Fp_polynomial&);
 	~gf_element();
 
@@ -101,6 +105,7 @@ public:
 	gf_element& operator = (const bigint&);
 	void assign(const gf_element &);
 	void assign(const bigint&);
+	void assign(const int &);
 	void assign_zero();
 	void assign_zero(const galois_field&);
 	void assign_one();
@@ -110,6 +115,12 @@ public:
 	// access functions
 	//
 
+	static void set_uninitialized_field(const galois_field &K) {
+		uninitialized_field().assign(K);
+	}
+	static void reset_uninitialized_field() { // mine
+		uninitialized_field().assign(galois_field());
+	}
 	const galois_field& get_field() const;
 	bigint characteristic () const;
 	Fp_polynomial polynomial_rep() const;

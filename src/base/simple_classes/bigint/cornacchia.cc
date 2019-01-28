@@ -135,15 +135,21 @@ bool cornacchia_prime_power( bigint & x, bigint & y,
   long s;
 
   if( ! DD.is_negative() )
-     lidia_error_handler("cornacchia_prime_power","D not negative");
+    lidia_error_handler("cornacchia_prime_power","D not negative");
 
   s = (4 - (DD.least_significant_digit() & 3)) & 3;    // DD mod 4
 
-//  if( ! is_prime(p)  || ! p.is_positive() || p == 2)
-//    lidia_error_handler("cornacchia_prime_power","p no odd prime number");
+  if( ! is_prime(p)  || ! p.is_positive() || p == 2)
+    lidia_error_handler("cornacchia_prime_power","p no odd prime number");
   
-  if( exp <= 0 || ( exp & 1 == 0 ) )
-	  lidia_error_handler("cornacchia_prime_power","exp no odd integer");
+  if( exp <= 0 )
+    lidia_error_handler("cornacchia_prime_power","exp not positive");
+
+  if (exp % 2 == 0) {
+    power(x, p, exp / 2);
+    shift_left(x, x, 1);
+    return true;
+  }
 
   power( modulus, p, exp );
   shift_left(modulus_four, modulus, 2);

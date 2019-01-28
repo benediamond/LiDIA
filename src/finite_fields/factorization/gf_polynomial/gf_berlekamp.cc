@@ -301,7 +301,7 @@ sf_berlekamp_work(factorization< gf_polynomial > &factors,
 		base_vector< gf_element > roots;
 
 		if (verbose) t.start("finding roots of splitting polynomial...");
-		roots.assign(find_roots(h));
+		roots.assign(find_roots(h, 1));
 		if (verbose) t.stop();
 
 		if (verbose) t.start("finding factors...");
