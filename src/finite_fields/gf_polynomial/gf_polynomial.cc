@@ -338,7 +338,9 @@ void polynomial<gf_element>::set_coefficient(const gf_element &a,
 }
 
 void polynomial<gf_element>::set_coefficient(const bigint &a, lidia_size_t i) {
-	gf_element temp(a);
+	// field should already be defined
+	gf_element temp(ffield);
+	temp.assign(a);
 	set_coefficient(temp, i);
 }
 

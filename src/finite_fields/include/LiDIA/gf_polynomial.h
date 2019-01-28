@@ -159,6 +159,20 @@ public:
 		check_coefficients();
 	}
 
+	polynomial(const Fp_polynomial &a, const galois_field &K)
+	: ffield(K)
+	{
+	if (a.modulus() != K.characteristic())
+		lidia_error_handler(
+                "polynomial< gf_element >",
+                "polynomial(const Fp_polynomial&, const galois_field&)"
+                "modulus does not match characteristic of field");
+		for (int d = a.degree(); d >= 0; d--)
+			set_coefficient(a[d], d);
+		check_coefficients();
+	}
+
+
 	~polynomial()
 	{ }
 

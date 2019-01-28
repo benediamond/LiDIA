@@ -71,8 +71,6 @@ void eco_prime::compute_divisor_of_division_polynomial (
 
 		this->guess_jltau (jltau);
 
-		divisor_found = false;
-
 		for (i = 0; i < jltau.get_size() && !divisor_found; i++) {
 #ifdef DEBUG
 			std::cout << "Testing for j(l*tau): " << i << std::endl;

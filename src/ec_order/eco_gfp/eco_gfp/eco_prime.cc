@@ -881,6 +881,15 @@ void eco_prime::Ytop_f(ff_pol & res, const ff_polmod & f)
 // input modulus (used in Elkies or Schoof algorithm) as
 // polynomial.
 
+polynomial<gf_element> eco_prime::CurveEqn ()
+{
+	polynomial<gf_element> pol(A.get_field());
+	pol.set_coefficient(3);
+	pol.set_coefficient(A, 1);
+	pol.set_coefficient(B, 0);
+	return pol;
+}
+
 void eco_prime::CurveEqn (ff_pol & pol, const ff_element & a,
 			  const ff_element & b, const ff_polmod & f)
 {
@@ -892,7 +901,6 @@ void eco_prime::CurveEqn (ff_pol & pol, const ff_element & a,
 	if (f.modulus().degree() <= 3)
 		remainder (pol, pol, f);
 }
-
 
 
 //----------------------------------------------------------

@@ -277,6 +277,7 @@ public:
 
 
 	void Ytop_f (ff_pol &res, const ff_polmod &f);
+	polynomial<gf_element> CurveEqn();
 	void CurveEqn (ff_pol & pol, const ff_element & a, const ff_element & b,
 		       const ff_polmod & f);
 
