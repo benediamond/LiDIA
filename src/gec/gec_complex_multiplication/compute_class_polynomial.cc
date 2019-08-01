@@ -277,6 +277,13 @@ namespace LiDIA {
     gec_complex_multiplication::
     compute_class_polynomial()
     {
+	compute_class_polynomial(0);
+    }
+
+    void
+    gec_complex_multiplication::
+    compute_class_polynomial(unsigned int mode)
+    {
 	// test if all values are set
 	if( generation_mode == 0 )
 	{
@@ -284,7 +291,7 @@ namespace LiDIA {
 	    class_group = compute_class_group( delta ); // see chapter 6 of PhD
 	    h = class_group.size();
 
-	    set_generation_mode( 0 );
+	    set_generation_mode( mode );
 	    set_complex_precision( 0 );
 	}
 

@@ -168,6 +168,7 @@ protected: bool assign_class_invariant_to_curve( const gf_element & );
 protected: void assign_efficient_curve_parameters( const Fp_polynomial & );
 
 public: void compute_class_polynomial();
+public: void compute_class_polynomial(unsigned int);
 protected: void compute_class_polynomial_real();
 protected: void compute_class_polynomial_karatsuba_low_precision();
 protected: void compute_class_polynomial_karatsuba_high_precision();
