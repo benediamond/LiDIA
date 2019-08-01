@@ -163,6 +163,11 @@ bigint bg_algorithm(const point< gf_element > & P,
 bigint bg_algorithm(const point< gf_element > & P,
 		    const point< gf_element > & Q,
 		    const bigint & lower, const bigint & upper,
+		    rational_factorization &, bool info = false);
+
+bigint bg_algorithm(const point< gf_element > & P,
+		    const point< gf_element > & Q,
+		    const bigint & lower, const bigint & upper,
 		    const bigint & x, const bigint & m,
 		    bool info = false);
 

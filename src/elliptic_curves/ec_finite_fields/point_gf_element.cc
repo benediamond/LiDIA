@@ -346,6 +346,17 @@ bigint bg_algorithm(const point< gf_element > & PP,
 		    const bigint & upper,
 		    bool info)
 {
+  rational_factorization mult_order(1);
+  return bg_algorithm(PP, QQ, lower, upper, mult_order, info);
+}
+
+bigint bg_algorithm(const point< gf_element > & PP,
+		    const point< gf_element > & QQ,
+                    const bigint & lower,
+		    const bigint & upper,
+		    rational_factorization &mult_order,
+		    bool info)
+  {
   if (PP.is_zero() && !QQ.is_zero())
     return (-1);
 
@@ -473,7 +484,10 @@ bigint bg_algorithm(const point< gf_element > & PP,
 	  }
 	  else
 	  {  
-	    P_ord = order_point(P);
+	    if ((evaluate_to_bigint(mult_order) * P).is_zero())
+	      P_ord = order_point(P, mult_order);
+	    else
+	      P_ord = order_point(P);
 	  }
 
 	  // Now move h into the requested interval.
