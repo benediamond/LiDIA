@@ -251,7 +251,7 @@ void eco_prime::free_psi (PsiPowers* & psi_pow, lidia_size_t b, lidia_size_t e)
 void eco_prime::build_plan (lidia_size_t ** & to_use, lidia_size_t k)
 {
 	lidia_size_t n;
-	to_use[k][0] = 1;
+	to_use[k][0] = 1; // redundant if to_use is tuned before!
 
 	while (k > 4) {
 		n = k >> 1;
@@ -339,7 +339,7 @@ void eco_prime::compute_psi (ff_pol &res, lidia_size_t k,
 
 	build_plan (to_use, k);
 
-	CurveEqn (sqrY, A, B, f);
+	eco_prime::CurveEqn (sqrY, A, B, f);
 	square (sqrY, sqrY, f);
 
 	psi[0][0] = new ff_pol; to_use[0][0] ++;
@@ -573,7 +573,6 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	galois_field K(A.get_field());
 
 	ff_pol  ***psi;
-	ff_pol  sqrY;
 	ff_element qqq;
 	ff_element ttt;
 	ff_element inv2;
@@ -602,12 +601,8 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 
 	build_plan (to_use, k);
 
-	ff_pol f(K); // what's the purpose of this?
-	f.set_degree(4);
-	f[4].assign_one(K); // arg unnecessary
-
-	CurveEqn (sqrY, A, B, f);
-	square (sqrY, sqrY);
+	ff_pol sqrY = CurveEqn();
+	square(sqrY, sqrY);
 
 	psi[0][0] = new ff_pol; to_use[0][0] ++;
 	psi[0][1] = new ff_pol; to_use[0][1] ++;
@@ -685,20 +680,19 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 
 	psi[4][0] = new ff_pol;
 	psi[4][0]->assign_zero(K);
-	psi[4][0]->set_degree(6);
-	(*psi[4][0])[6].assign(4); // why did i use pointers here and nowhere else?
-	(*psi[4][0])[4].assign(20 * A);
-	(*psi[4][0])[3].assign(80 * B);
+	psi[4][0]->set_coefficient(4, 6);
+	psi[4][0]->set_coefficient(20 * A, 4);
+	psi[4][0]->set_coefficient(80 * B, 3);
 
 	multiply (tmp, A, B);
 	multiply (ttt, 16, tmp);
 	negate (ttt, ttt);
-	(*psi[4][0])[1].assign(ttt);
+	psi[4][0]->set_coefficient(ttt, 1);
 
 	square (tmp, A);
 	multiply(ttt, 20, tmp);
 	negate (ttt, ttt);
-	(*psi[4][0])[2].assign(ttt);
+	psi[4][0]->set_coefficient(ttt, 2);
 
 	multiply (tmp, tmp, A);
 	multiply (tmp, 4, tmp); // tmp = 4.A^3
@@ -706,7 +700,7 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	multiply (tmp2, 32, tmp2);
 	add (ttt, tmp, tmp2);
 	negate(ttt, ttt);
-	(*psi[4][0])[1].assign(ttt);
+	psi[4][0]->set_coefficient(ttt, 0);
 
 	if (to_use[4][1] > 0 || to_use[4][2] > 0) {
 		psi[4][1] = new ff_pol;
@@ -824,6 +818,227 @@ void eco_prime::compute_psi (ff_pol & res, lidia_size_t k)
 	delete[] to_use;
 }
 
+void eco_prime::compute_psi(ff_pol ***psi, lidia_size_t **to_use,
+                            lidia_size_t k)
+{
+	lidia_size_t i, pos, n, j;
+	lidia_size_t size;
+
+	galois_field K(A.get_field());
+
+	ff_element qqq;
+	ff_element ttt; // ttt = ff_element(0);
+	ff_element inv2;
+	ff_element tmp, tmp2;
+
+	size = comparator<lidia_size_t>::max(k, 4);
+
+	inv2.assign(2);
+	invert(inv2, inv2);
+
+	build_plan(to_use, k);
+
+	ff_pol sqrY = CurveEqn();
+	square(sqrY, sqrY);
+
+	psi[0][0] = new ff_pol;
+	to_use[0][0]++;
+	psi[0][1] = new ff_pol;
+	to_use[0][1]++;
+	psi[0][2] = new ff_pol;
+	to_use[0][2]++;
+
+	psi[0][0]->assign_zero(K);
+	psi[0][1]->assign_zero(K);
+	psi[0][2]->assign_zero(K);
+
+	// psi_1, psi_1^2, psi_1^3
+
+	psi[1][0] = new ff_pol;
+	psi[1][0]->assign_one(K);
+
+	if (to_use[1][1] > 0) {
+		psi[1][1] = new ff_pol;
+		psi[1][1]->assign_one(K);
+	}
+
+	if (to_use[1][2] > 0) {
+		psi[1][2] = new ff_pol;
+		psi[1][2]->assign_one(K);
+	}
+
+	to_use[1][0]++;
+
+	// psi_2, psi_2^2, psi_2^3
+
+	psi[2][0] = new ff_pol;
+	psi[2][0]->assign_zero(K);
+	psi[2][0]->set_coefficient(2, 0);
+
+	if (to_use[2][1] > 0) {
+		psi[2][1] = new ff_pol;
+		psi[2][1]->assign_zero(K);
+		psi[2][1]->set_coefficient(4, 0);
+	}
+
+	if (to_use[2][2] > 0)   // ?? wo sind die y^i terme ??
+	{
+		psi[2][2] = new ff_pol;
+		psi[2][2]->assign_zero(K);
+		psi[2][2]->set_coefficient(8, 0);
+	}
+
+	to_use[2][0]++;
+
+	// psi_3, psi_3^2, psi_3^3
+
+	psi[3][0] = new ff_pol;
+	psi[3][0]->assign_zero(K);
+	psi[3][0]->set_coefficient(3, 4);
+	psi[3][0]->set_coefficient(6 * A, 2);
+	psi[3][0]->set_coefficient(12 * B, 1);
+	square(ttt, A);
+	negate(ttt, ttt);
+	psi[3][0]->set_coefficient(ttt, 0);
+
+	if (to_use[3][1] > 0 || to_use[3][2] > 0) {
+		psi[3][1] = new ff_pol;
+		square(*psi[3][1], *psi[3][0]);
+	}
+
+	if (to_use[3][2] > 0) {
+		psi[3][2] = new ff_pol;
+		multiply(*psi[3][2], *psi[3][1], *psi[3][0]);
+		if (to_use[3][1] == 0)
+			delete (psi[3][1]);
+	}
+
+	to_use[3][0]++;
+
+	// psi_4, psi_4^2, psi_4^3
+
+	psi[4][0] = new ff_pol;
+	psi[4][0]->assign_zero(K);
+	psi[4][0]->set_degree(6);
+	(*psi[4][0])[6].assign(4);
+	(*psi[4][0])[4].assign(20 * A);
+	(*psi[4][0])[3].assign(80 * B);
+
+	multiply(tmp, A, B);
+	multiply(ttt, 16, tmp);
+	negate(ttt, ttt);
+	(*psi[4][0])[1].assign(ttt);
+
+	square(tmp, A);
+	multiply(ttt, 20, tmp);
+	negate(ttt, ttt);
+	(*psi[4][0])[2].assign(ttt);
+
+	multiply(tmp, tmp, A);
+	multiply(tmp, 4, tmp); // tmp = 4.A^3
+	square(tmp2, B);
+	multiply(tmp2, 32, tmp2);
+	add(ttt, tmp, tmp2);
+	negate(ttt, ttt);
+	(*psi[4][0])[0].assign(ttt);
+
+	if (to_use[4][1] > 0 || to_use[4][2] > 0) {
+		psi[4][1] = new ff_pol;
+		square(*psi[4][1], *psi[4][0]);
+	}
+
+	if (to_use[4][2] > 0) {
+		psi[4][2] = new ff_pol;
+		multiply(*psi[4][2], *psi[4][1], *psi[4][0]);
+		if (to_use[4][1] == 0)
+			delete (psi[4][1]);
+	}
+	to_use[4][0]++;
+
+    //* * * * *  Now we start the recursion  * * * * * * * * * * *
+
+	if (k >= 1 && k <= 4)
+		return; // res = *psi[k][0];
+	else {
+		pos = 4;
+		while (k > pos) {
+			pos++;
+			while (to_use[pos][0] + to_use[pos][1] + to_use[pos][2] == 0)
+				pos++;
+
+			psi[pos][0] = new ff_pol;
+
+			// Computation of psi[pos]
+			if (pos & 1) {
+				n = pos >> 1;
+				multiply(*psi[0][0], *psi[n + 2][0], *psi[n][2]);
+				multiply(*psi[0][1], *psi[n + 1][2], *psi[n - 1][0]);
+
+				if (n & 1) {
+					multiply(*psi[0][1], *psi[0][1], sqrY);
+				} else {
+					multiply(*psi[0][0], *psi[0][0], sqrY);
+				}
+
+				subtract(*psi[pos][0], *psi[0][0], *psi[0][1]);
+				to_use[n + 2][0]--;
+				to_use[n][2]--;
+				to_use[n + 1][2]--;
+				to_use[n - 1][0]--;
+
+				if (!to_use[n + 2][0])
+					delete (psi[n + 2][0]);
+				if (!to_use[n][2])
+					delete (psi[n][2]);
+				if (!to_use[n + 1][2])
+					delete (psi[n + 1][2]);
+				if (!to_use[n - 1][0])
+					delete (psi[n - 1][0]);
+			} else {
+				n = pos >> 1;
+				multiply(*psi[0][0], *psi[n + 2][0], *psi[n - 1][1]);
+				multiply(*psi[0][1], *psi[n - 2][0], *psi[n + 1][1]);
+				subtract(*psi[pos][0], *psi[0][0], *psi[0][1]);
+				multiply(*psi[pos][0], *psi[pos][0], *psi[n][0]);
+
+				qqq = inv2;
+				multiply(*psi[pos][0], qqq, *psi[pos][0]);
+				to_use[n + 2][0]--;
+				to_use[n - 1][1]--;
+				to_use[n - 2][0]--;
+				to_use[n + 1][1]--;
+				to_use[n][0]--;
+
+				if (!to_use[n + 2][0])
+					delete (psi[n + 2][0]);
+				if (!to_use[n - 1][1])
+					delete (psi[n - 1][1]);
+				if (!to_use[n - 2][0])
+					delete (psi[n - 2][0]);
+				if (!to_use[n + 1][1])
+					delete (psi[n + 1][1]);
+				if (!to_use[n][0])
+					delete (psi[n][0]);
+			}
+
+			if (to_use[pos][1] > 0 || to_use[pos][2] > 0) {
+				psi[pos][1] = new ff_pol;
+				square(*psi[pos][1], *psi[pos][0]);
+			}
+
+			if (to_use[pos][2] > 0) {
+				psi[pos][2] = new ff_pol;
+				multiply(*psi[pos][2], *psi[pos][1], *psi[pos][0]);
+
+				if (to_use[pos][1] == 0)
+					delete (psi[pos][1]);
+			}
+
+			if (to_use[pos][0] == 0)
+				delete (psi[pos][0]);
+		} // end of while
+	} // end of else
+}
 
 
 #ifdef LIDIA_NAMESPACE

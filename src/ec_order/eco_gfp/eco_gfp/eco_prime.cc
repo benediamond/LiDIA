@@ -893,7 +893,7 @@ polynomial<gf_element> eco_prime::CurveEqn ()
 void eco_prime::CurveEqn (ff_pol & pol, const ff_element & a,
 			  const ff_element & b, const ff_polmod & f)
 {
-	pol.assign_zero(A.get_field());
+	pol.assign_zero(f.modulus().get_field());
 	pol.set_coefficient(3);
 	pol.set_coefficient(a, 1);
 	pol.set_coefficient(b, 0);

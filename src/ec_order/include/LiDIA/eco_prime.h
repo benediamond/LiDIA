@@ -248,6 +248,7 @@ public:
 
 	void compute_psi (ff_pol &res, lidia_size_t k, const ff_polmod &f);
 	void compute_psi (ff_pol &res, lidia_size_t k);
+	void compute_psi(ff_pol ***psi, lidia_size_t **to_use, lidia_size_t k);
 	void build_plan  (lidia_size_t ** &to_use, lidia_size_t k);
 	void print_plan  (lidia_size_t **to_use, lidia_size_t k);
 
@@ -278,7 +279,7 @@ public:
 
 	void Ytop_f (ff_pol &res, const ff_polmod &f);
 	polynomial<gf_element> CurveEqn();
-	void CurveEqn (ff_pol & pol, const ff_element & a, const ff_element & b,
+	static void CurveEqn (ff_pol & pol, const ff_element & a, const ff_element & b,
 		       const ff_polmod & f);
 
 	int extract_sqrt(point< gf_element > * &, const point< gf_element > &);
