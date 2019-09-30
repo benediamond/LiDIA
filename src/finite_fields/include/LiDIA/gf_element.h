@@ -140,6 +140,12 @@ public:
 	gf_element & operator *= (const bigint &);
 	gf_element & operator /= (const bigint &);
 
+	int compare(const gf_element&) const;
+	bool operator<(const gf_element &) const;
+	bool operator<=(const gf_element &) const;
+	bool operator>(const gf_element &) const;
+	bool operator>=(const gf_element &) const;
+
 	//
 	// procedural versions
 	//

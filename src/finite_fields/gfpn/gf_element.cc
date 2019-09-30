@@ -26,7 +26,7 @@
 #include	"LiDIA/power_functions.h"
 #include	"LiDIA/gf_polynomial.h"
 #include	<cctype>
-
+#include	<sstream>
 
 
 #ifdef LIDIA_NAMESPACE
@@ -937,6 +937,18 @@ gf_element::operator != (const bigint & a) const
 	return !(*this == a);
 }
 
+int gf_element::compare(const gf_element& a) const {
+    std::stringstream sthis;
+    std::stringstream sa;
+    sthis << (*this);
+    sa << a;
+    return sthis.str().compare(sa.str());
+}
+
+bool gf_element::operator<(const gf_element &a) const { return compare(a) < 0; }
+bool gf_element::operator<=(const gf_element &a) const { return compare(a) <= 0; }
+bool gf_element::operator>(const gf_element &a) const { return compare(a) > 0; }
+bool gf_element::operator>=(const gf_element &a) const { return compare(a) >= 0; }
 
 
 bool

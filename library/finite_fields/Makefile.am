@@ -127,6 +127,7 @@ libLiDIA_FF_la_SOURCES = \
 	$(LIDIA_FF_SRCDIR)/instantiate/spsr_bigint.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/spsr_bigrational.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/spsr_udigit_mod.cc \
+	$(LIDIA_FF_SRCDIR)/instantiate/sv_gf_element.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_pp_sf_Fp_polynomial.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_pp_sf_gf_polynomial.cc \
 	$(LIDIA_FF_SRCDIR)/instantiate/sv_spc_bigint.cc \
